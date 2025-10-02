@@ -624,9 +624,9 @@ ipcMain.handle('download-video', async (event, { videoId, url, quality, format, 
 /**
  * Download video using yt-dlp
  */
-async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, requiresConversion }) {
+async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, requiresConversion, onProcess, onProgress }) {
   const ytDlpPath = getBinaryPath('yt-dlp')
-  
+
   // Build yt-dlp arguments
   const args = [
     '--newline', // Force progress on new lines for better parsing
@@ -635,19 +635,24 @@ async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, re
     '-o', path.join(savePath, '%(title)s.%(ext)s'),
     url
   ]
-  
+
   // Add cookie file if provided
   if (cookieFile && fs.existsSync(cookieFile)) {
     args.unshift('--cookies', cookieFile)
   }
-  
+
   return new Promise((resolve, reject) => {
     console.log('Starting yt-dlp download:', { url, quality, savePath })
-    
+
     const downloadProcess = spawn(ytDlpPath, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: process.cwd()
     })
+
+    // Notify caller about process reference for cancellation
+    if (onProcess && typeof onProcess === 'function') {
+      onProcess(downloadProcess)
+    }
     
     let output = ''
     let errorOutput = ''
@@ -669,13 +674,21 @@ async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, re
           const progress = parseFloat(downloadMatch[1])
           // Adjust progress if conversion is required (download is only 70% of total)
           const adjustedProgress = requiresConversion ? Math.round(progress * 0.7) : progress
-          
-          event.sender.send('download-progress', {
+
+          const progressData = {
             url,
             progress: adjustedProgress,
             status: 'downloading',
             stage: 'download'
-          })
+          }
+
+          // Send to renderer
+          event.sender.send('download-progress', progressData)
+
+          // Notify callback if provided
+          if (onProgress && typeof onProgress === 'function') {
+            onProgress(progressData)
+          }
         }
         
         // Post-processing progress: [ffmpeg] Destination: filename.mp4

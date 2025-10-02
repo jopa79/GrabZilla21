@@ -12,7 +12,7 @@ const testSuites = [
     {
         name: 'Core Unit Tests',
         command: 'npx',
-        args: ['vitest', 'run', 'tests/video-model.test.js', 'tests/state-management.test.js', 'tests/ipc-integration.test.js'],
+        args: ['vitest', 'run', 'tests/video-model.test.js', 'tests/state-management.test.js', 'tests/ipc-integration.test.js', 'tests/download-manager.test.js'],
         timeout: 60000
     },
     {
@@ -30,7 +30,7 @@ const testSuites = [
     {
         name: 'Validation Tests',
         command: 'npx',
-        args: ['vitest', 'run', 'tests/url-validation.test.js', 'tests/playlist-extraction.test.js', 'tests/binary-versions.test.js'],
+        args: ['vitest', 'run', 'tests/url-validation.test.js', 'tests/playlist-extraction.test.js', 'tests/binary-versions.test.js', 'tests/gpu-detection.test.js'],
         timeout: 60000
     },
     {

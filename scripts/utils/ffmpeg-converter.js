@@ -27,17 +27,33 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const gpuDetector = require('./gpu-detector');
 
 /**
  * FFmpeg Converter Class
- * 
- * Manages video format conversion operations with progress tracking
- * and comprehensive error handling
+ *
+ * Manages video format conversion operations with progress tracking,
+ * GPU hardware acceleration, and comprehensive error handling
  */
 class FFmpegConverter {
     constructor() {
         this.activeConversions = new Map();
         this.conversionId = 0;
+        this.gpuCapabilities = null;
+        this.initGPU();
+    }
+
+    /**
+     * Initialize GPU detection
+     * @private
+     */
+    async initGPU() {
+        try {
+            this.gpuCapabilities = await gpuDetector.detect();
+            console.log('✅ FFmpegConverter GPU initialized:', this.gpuCapabilities.type || 'Software only');
+        } catch (error) {
+            console.warn('⚠️  GPU initialization failed:', error.message);
+        }
     }
 
     /**
@@ -64,21 +80,28 @@ class FFmpegConverter {
      * Get FFmpeg encoding arguments for specific format
      * @param {string} format - Target format (H264, ProRes, DNxHR, Audio only)
      * @param {string} quality - Video quality setting
+     * @param {boolean} useGPU - Whether to use GPU acceleration (default: true)
      * @returns {Array<string>} FFmpeg arguments array
      * @private
      */
-    getEncodingArgs(format, quality) {
+    getEncodingArgs(format, quality, useGPU = true) {
         const args = [];
 
         switch (format) {
             case 'H264':
-                args.push(
-                    '-c:v', 'libx264',
-                    '-preset', 'medium',
-                    '-crf', this.getH264CRF(quality),
-                    '-c:a', 'aac',
-                    '-b:a', '128k'
-                );
+                // Try GPU encoding first if available and requested
+                if (useGPU && this.gpuCapabilities?.hasGPU) {
+                    args.push(...this.getGPUEncodingArgs(quality));
+                } else {
+                    // Software encoding fallback
+                    args.push(
+                        '-c:v', 'libx264',
+                        '-preset', 'medium',
+                        '-crf', this.getH264CRF(quality),
+                        '-c:a', 'aac',
+                        '-b:a', '128k'
+                    );
+                }
                 break;
 
             case 'ProRes':
@@ -127,6 +150,194 @@ class FFmpegConverter {
             '480p': '28'     // Acceptable quality for 480p
         };
         return crfMap[quality] || '23';
+    }
+
+    /**
+     * Get GPU-accelerated encoding arguments
+     * @param {string} quality - Video quality setting
+     * @returns {Array<string>} GPU encoding arguments
+     * @private
+     */
+    getGPUEncodingArgs(quality) {
+        const args = [];
+        const gpu = this.gpuCapabilities;
+
+        if (!gpu || !gpu.hasGPU) {
+            throw new Error('GPU not available');
+        }
+
+        switch (gpu.type) {
+            case 'videotoolbox':
+                // Apple VideoToolbox (macOS)
+                args.push(
+                    '-c:v', 'h264_videotoolbox',
+                    '-b:v', this.getVideotoolboxBitrate(quality),
+                    '-profile:v', 'high',
+                    '-allow_sw', '1', // Allow software fallback if needed
+                    '-c:a', 'aac',
+                    '-b:a', '128k'
+                );
+                break;
+
+            case 'nvenc':
+                // NVIDIA NVENC
+                args.push(
+                    '-c:v', 'h264_nvenc',
+                    '-preset', 'p4', // Quality preset (p1=fastest to p7=slowest)
+                    '-cq', this.getNvencCQ(quality),
+                    '-b:v', '0', // Use CQ mode (constant quality)
+                    '-c:a', 'aac',
+                    '-b:a', '128k'
+                );
+                break;
+
+            case 'amf':
+                // AMD AMF
+                args.push(
+                    '-c:v', 'h264_amf',
+                    '-quality', this.getAMFQuality(quality),
+                    '-rc', 'cqp', // Constant Quality mode
+                    '-qp_i', this.getAMFQP(quality),
+                    '-qp_p', this.getAMFQP(quality),
+                    '-c:a', 'aac',
+                    '-b:a', '128k'
+                );
+                break;
+
+            case 'qsv':
+                // Intel Quick Sync
+                args.push(
+                    '-c:v', 'h264_qsv',
+                    '-preset', 'medium',
+                    '-global_quality', this.getQSVQuality(quality),
+                    '-c:a', 'aac',
+                    '-b:a', '128k'
+                );
+                break;
+
+            case 'vaapi':
+                // VA-API (Linux)
+                args.push(
+                    '-vaapi_device', '/dev/dri/renderD128',
+                    '-c:v', 'h264_vaapi',
+                    '-qp', this.getVAAPIQP(quality),
+                    '-c:a', 'aac',
+                    '-b:a', '128k'
+                );
+                break;
+
+            default:
+                throw new Error(`Unsupported GPU type: ${gpu.type}`);
+        }
+
+        console.log(`🎮 Using ${gpu.type} GPU acceleration for encoding`);
+        return args;
+    }
+
+    /**
+     * Get VideoToolbox bitrate based on quality
+     * @param {string} quality - Video quality
+     * @returns {string} Bitrate string (e.g., '10M')
+     * @private
+     */
+    getVideotoolboxBitrate(quality) {
+        const bitrateMap = {
+            '4320p': '80M',
+            '2160p': '40M',
+            '1440p': '20M',
+            '1080p': '10M',
+            '720p': '5M',
+            '480p': '2.5M',
+            '360p': '1M'
+        };
+        return bitrateMap[quality] || '5M';
+    }
+
+    /**
+     * Get NVENC constant quality value
+     * @param {string} quality - Video quality
+     * @returns {string} CQ value (0-51, lower = better)
+     * @private
+     */
+    getNvencCQ(quality) {
+        const cqMap = {
+            '4320p': '19',
+            '2160p': '21',
+            '1440p': '23',
+            '1080p': '23',
+            '720p': '25',
+            '480p': '28',
+            '360p': '30'
+        };
+        return cqMap[quality] || '23';
+    }
+
+    /**
+     * Get AMF quality preset
+     * @param {string} quality - Video quality
+     * @returns {string} Quality preset
+     * @private
+     */
+    getAMFQuality(quality) {
+        // AMF quality presets: speed, balanced, quality
+        return quality.includes('4') || quality.includes('2160') ? 'quality' : 'balanced';
+    }
+
+    /**
+     * Get AMF quantization parameter
+     * @param {string} quality - Video quality
+     * @returns {string} QP value
+     * @private
+     */
+    getAMFQP(quality) {
+        const qpMap = {
+            '4320p': '18',
+            '2160p': '20',
+            '1440p': '22',
+            '1080p': '22',
+            '720p': '24',
+            '480p': '26',
+            '360p': '28'
+        };
+        return qpMap[quality] || '22';
+    }
+
+    /**
+     * Get QSV global quality value
+     * @param {string} quality - Video quality
+     * @returns {string} Quality value
+     * @private
+     */
+    getQSVQuality(quality) {
+        const qualityMap = {
+            '4320p': '18',
+            '2160p': '20',
+            '1440p': '22',
+            '1080p': '22',
+            '720p': '24',
+            '480p': '26',
+            '360p': '28'
+        };
+        return qualityMap[quality] || '22';
+    }
+
+    /**
+     * Get VA-API quantization parameter
+     * @param {string} quality - Video quality
+     * @returns {string} QP value
+     * @private
+     */
+    getVAAPIQP(quality) {
+        const qpMap = {
+            '4320p': '18',
+            '2160p': '20',
+            '1440p': '22',
+            '1080p': '22',
+            '720p': '24',
+            '480p': '26',
+            '360p': '28'
+        };
+        return qpMap[quality] || '22';
     }
 
     /**
