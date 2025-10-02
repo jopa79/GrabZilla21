@@ -918,6 +918,91 @@ ipcMain.handle('get-video-metadata', async (event, url) => {
   }
 })
 
+// Extract all videos from a YouTube playlist
+ipcMain.handle('extract-playlist-videos', async (event, playlistUrl) => {
+  const ytDlpPath = getBinaryPath('yt-dlp')
+
+  if (!fs.existsSync(ytDlpPath)) {
+    const errorInfo = handleBinaryMissing('yt-dlp')
+    throw new Error(errorInfo.message)
+  }
+
+  if (!playlistUrl || typeof playlistUrl !== 'string') {
+    throw new Error('Valid playlist URL is required')
+  }
+
+  // Verify it's a playlist URL
+  const playlistPattern = /[?&]list=([\w\-]+)/
+  const match = playlistUrl.match(playlistPattern)
+
+  if (!match) {
+    throw new Error('Invalid playlist URL format')
+  }
+
+  const playlistId = match[1]
+
+  try {
+    console.log('Extracting playlist videos:', playlistId)
+
+    // Use yt-dlp to extract playlist information
+    const args = [
+      '--flat-playlist',
+      '--dump-json',
+      '--no-warnings',
+      playlistUrl
+    ]
+
+    const output = await runCommand(ytDlpPath, args)
+
+    if (!output.trim()) {
+      throw new Error('No playlist data returned from yt-dlp')
+    }
+
+    // Parse JSON lines (one per video)
+    const lines = output.trim().split('\n')
+    const videos = []
+
+    for (const line of lines) {
+      try {
+        const videoData = JSON.parse(line)
+
+        // Extract essential video information
+        videos.push({
+          id: videoData.id,
+          title: videoData.title || 'Unknown Title',
+          url: videoData.url || `https://www.youtube.com/watch?v=${videoData.id}`,
+          duration: videoData.duration || null,
+          thumbnail: videoData.thumbnail || null,
+          uploader: videoData.uploader || videoData.channel || null
+        })
+      } catch (parseError) {
+        console.warn('Failed to parse playlist video:', parseError)
+        // Continue processing other videos
+      }
+    }
+
+    console.log(`Extracted ${videos.length} videos from playlist`)
+
+    return {
+      success: true,
+      playlistId: playlistId,
+      videoCount: videos.length,
+      videos: videos
+    }
+
+  } catch (error) {
+    console.error('Error extracting playlist:', error)
+
+    if (error.message.includes('Playlist does not exist')) {
+      throw new Error('Playlist not found or has been deleted')
+    } else if (error.message.includes('Private')) {
+      throw new Error('Playlist is private and cannot be accessed')
+    } else {
+      throw new Error(`Failed to extract playlist: ${error.message}`)
+    }
+  }
+})
+
 // Helper function to select the best thumbnail from available options
 function selectBestThumbnail(thumbnails) {
   if (!thumbnails || !Array.isArray(thumbnails)) {

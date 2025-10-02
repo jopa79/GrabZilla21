@@ -279,4 +279,95 @@ describe('URL Validation - Task 8', () => {
             });
         });
     });
+
+    describe('YouTube Shorts Support', () => {
+        it('should validate YouTube Shorts URLs', () => {
+            const shortsUrls = [
+                'https://www.youtube.com/shorts/abc12345678',
+                'https://youtube.com/shorts/xyz98765432',
+                'youtube.com/shorts/test1234567'
+            ];
+
+            shortsUrls.forEach(url => {
+                expect(URLValidator.isYouTubeUrl(url)).toBe(true);
+                expect(URLValidator.isYouTubeShorts(url)).toBe(true);
+            });
+        });
+
+        it('should detect Shorts URLs correctly', () => {
+            // Positive cases
+            expect(URLValidator.isYouTubeShorts('https://www.youtube.com/shorts/abc12345678')).toBe(true);
+            expect(URLValidator.isYouTubeShorts('https://youtube.com/shorts/xyz98765432')).toBe(true);
+            expect(URLValidator.isYouTubeShorts('youtube.com/shorts/test1234567')).toBe(true);
+
+            // Negative cases
+            expect(URLValidator.isYouTubeShorts('https://www.youtube.com/watch?v=abc12345678')).toBe(false);
+            expect(URLValidator.isYouTubeShorts('https://youtu.be/abc12345678')).toBe(false);
+            expect(URLValidator.isYouTubeShorts('https://vimeo.com/123456789')).toBe(false);
+        });
+
+        it('should extract video ID from Shorts URLs', () => {
+            const url = 'https://www.youtube.com/shorts/abc12345678';
+            const videoId = URLValidator.extractYouTubeId(url);
+            expect(videoId).toBe('abc12345678');
+        });
+
+        it('should extract video ID from various Shorts URL formats', () => {
+            const testCases = [
+                { url: 'https://www.youtube.com/shorts/abc12345678', expected: 'abc12345678' },
+                { url: 'https://youtube.com/shorts/xyz98765432', expected: 'xyz98765432' },
+                { url: 'youtube.com/shorts/test1234567', expected: 'test1234567' }
+            ];
+
+            testCases.forEach(({ url, expected }) => {
+                const normalized = URLValidator.normalizeUrl(url);
+                const videoId = URLValidator.extractYouTubeId(normalized);
+                expect(videoId).toBe(expected);
+            });
+        });
+
+        it('should normalize Shorts URLs to watch URLs', () => {
+            const shortsUrl = 'https://www.youtube.com/shorts/abc12345678';
+            const normalized = URLValidator.normalizeUrl(shortsUrl);
+            expect(normalized).toBe('https://www.youtube.com/watch?v=abc12345678');
+        });
+
+        it('should extract Shorts URLs from multi-line text', () => {
+            const text = `
+                Check out this short: https://youtube.com/shorts/abc12345678
+                And this one: https://www.youtube.com/shorts/xyz98765432
+                Regular video: https://www.youtube.com/watch?v=test1234567
+            `;
+
+            const { valid } = URLValidator.validateMultipleUrls(text);
+            expect(valid.length).toBe(3);
+
+            // All should be normalized to watch URLs
+            valid.forEach(url => {
+                expect(url).toMatch(/youtube\.com\/watch\?v=/);
+            });
+        });
+
+        it('should handle Shorts URLs with additional parameters', () => {
+            const urlWithParams = 'https://www.youtube.com/shorts/abc12345678?feature=share';
+            expect(URLValidator.isYouTubeUrl(urlWithParams)).toBe(true);
+            expect(URLValidator.isYouTubeShorts(urlWithParams)).toBe(true);
+
+            const videoId = URLValidator.extractYouTubeId(urlWithParams);
+            expect(videoId).toBe('abc12345678');
+        });
+
+        it('should deduplicate Shorts URLs that point to the same video', () => {
+            const text = `
+                https://www.youtube.com/shorts/abc12345678
+                https://youtube.com/shorts/abc12345678
+                https://www.youtube.com/watch?v=abc12345678
+            `;
+
+            const { valid } = URLValidator.validateMultipleUrls(text);
+            // All three URLs point to the same video, should be deduplicated to 1
+            expect(valid.length).toBe(1);
+            expect(valid[0]).toBe('https://www.youtube.com/watch?v=abc12345678');
+        });
+    });
 });

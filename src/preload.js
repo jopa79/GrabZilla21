@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Video operations
   downloadVideo: (options) => ipcRenderer.invoke('download-video', options),
   getVideoMetadata: (url) => ipcRenderer.invoke('get-video-metadata', url),
+  extractPlaylistVideos: (playlistUrl) => ipcRenderer.invoke('extract-playlist-videos', playlistUrl),
   
   // Format conversion operations
   cancelConversion: (conversionId) => ipcRenderer.invoke('cancel-conversion', conversionId),

@@ -30,7 +30,7 @@ const testSuites = [
     {
         name: 'Validation Tests',
         command: 'npx',
-        args: ['vitest', 'run', 'tests/url-validation.test.js'],
+        args: ['vitest', 'run', 'tests/url-validation.test.js', 'tests/playlist-extraction.test.js'],
         timeout: 60000
     },
     {

@@ -19,10 +19,10 @@ class URLValidator {
                this.isGenericVideoUrl(trimmedUrl);
     }
 
-    // Validate YouTube URLs
+    // Validate YouTube URLs (including Shorts)
     static isYouTubeUrl(url) {
-        // Match YouTube URLs with any query parameters
-        const videoPattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-_]{11}([?&].*)?$/i;
+        // Match YouTube URLs with any query parameters (including Shorts)
+        const videoPattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)[\w\-_]{11}([?&].*)?$/i;
         const playlistPattern = /^(https?:\/\/)?(www\.)?youtube\.com\/playlist\?list=[\w\-]+/i;
         return videoPattern.test(url) || playlistPattern.test(url);
     }
@@ -43,6 +43,14 @@ class URLValidator {
         return /[?&]list=[\w\-]+/.test(url);
     }
 
+    // Check if URL is a YouTube Shorts video
+    static isYouTubeShorts(url) {
+        if (!url || typeof url !== 'string') {
+            return false;
+        }
+        return /youtube\.com\/shorts\/[\w\-_]{11}/i.test(url);
+    }
+
     // Validate generic video URLs
     static isGenericVideoUrl(url) {
         // Disable generic video URL validation to be more strict
@@ -50,7 +58,7 @@ class URLValidator {
         return false;
     }
 
-    // Extract video ID from YouTube URL
+    // Extract video ID from YouTube URL (including Shorts)
     static extractYouTubeId(url) {
         if (!this.isYouTubeUrl(url)) {
             return null;
@@ -60,6 +68,7 @@ class URLValidator {
             /[?&]v=([^&#]*)/,                    // youtube.com/watch?v=ID
             /\/embed\/([^\/\?]*)/,               // youtube.com/embed/ID
             /\/v\/([^\/\?]*)/,                   // youtube.com/v/ID
+            /\/shorts\/([^\/\?]*)/,              // youtube.com/shorts/ID
             /youtu\.be\/([^\/\?]*)/              // youtu.be/ID
         ];
 
@@ -133,8 +142,8 @@ class URLValidator {
         }
 
         // Extract all URLs from text using regex patterns
-        // Match entire YouTube URLs including all query parameters
-        const youtubePattern = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)[\w\-_]{11}(?:[?&][^\s]*)*/gi;
+        // Match entire YouTube URLs including all query parameters (including Shorts)
+        const youtubePattern = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)[\w\-_]{11}(?:[?&][^\s]*)*/gi;
         const vimeoPattern = /(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/|player\.vimeo\.com\/video\/)\d+/gi;
 
         const youtubeMatches = urlText.match(youtubePattern) || [];
