@@ -60,21 +60,21 @@
 
 ---
 
-### **Priority 3: Binary Management Fixes** 🔧
+### **Priority 3: Binary Management Fixes** ✅ **COMPLETED**
 
-- [ ] **Task 13**: Fix binary update system
-  - Debug automatic update checking for yt-dlp and ffmpeg binaries
-  - Ensure version comparison works correctly
-  - Fix GitHub API rate limiting issues
-  - Implement proper error handling for update failures
-  - Test update notifications
+- [x] **Task 13**: Fix binary update system
+  - ✅ Fixed GitHub API rate limiting issues (better headers, 10s timeout)
+  - ✅ Improved error handling (graceful null returns instead of exceptions)
+  - ✅ Version comparison working correctly (date-based and semantic)
+  - ✅ Comprehensive test coverage (25 new tests in binary-versions.test.js)
+  - ✅ Update notifications working with info dialog
 
-- [ ] **Task 14**: Fix statusline version display
-  - Implement statusline/footer showing currently installed versions of yt-dlp and ffmpeg
-  - Add visual indicators for update availability
-  - Display binary paths and last update check time
-  - Add manual update check button
-  - Style statusline to match design system
+- [x] **Task 14**: Fix statusline version display
+  - ✅ Implemented statusline with yt-dlp and ffmpeg versions
+  - ✅ Added animated update badge (pulsing indicator) when updates available
+  - ✅ Display last update check timestamp with full datetime tooltip
+  - ✅ Manual update check button with loading states
+  - ✅ Styled statusline with design system (monospace fonts, proper colors)
 
 ---
 
@@ -273,11 +273,11 @@ const args = ['--flat-playlist', '--dump-json', playlistUrl];
 
 ### **Current Status**
 - ✅ **Core Features**: Complete (Tasks 1-15 from original plan)
-- ✅ **Metadata Service**: Implemented and integrated
-- ⏳ **Binary Management**: Fixes needed
+- ✅ **Metadata Service**: Implemented and integrated (Phase 1)
+- ✅ **YouTube Enhancements**: Shorts & Playlists support (Phase 2)
+- ✅ **Binary Management**: Fixed with statusline (Phase 3)
 - ⏳ **Parallel Processing**: Implementation pending
 - ⏳ **GPU Acceleration**: Research and implementation pending
-- ⏳ **YouTube Enhancements**: Implementation pending
 
 ### **Estimated Timeline**
 - **Tasks 1-7** (Current work + Testing): 4-6 hours
