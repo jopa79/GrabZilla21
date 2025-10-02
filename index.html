@@ -601,9 +601,24 @@
             </button>
         </div>
 
-        <!-- Status Message -->
-        <div class="text-center text-xs text-[#90a1b9] h-4">
+        <!-- Status Message & Binary Versions -->
+        <div class="flex items-center justify-between text-xs text-[#90a1b9] h-6 px-4">
+            <!-- Left: Status Message -->
             <span id="statusMessage" role="status" aria-live="polite">Ready to download videos</span>
+
+            <!-- Right: Binary Versions -->
+            <div id="binaryVersions" class="flex items-center gap-4">
+                <div id="ytdlpVersion" class="flex items-center gap-2">
+                    <span class="font-medium text-[#cad5e2]">yt-dlp:</span>
+                    <span id="ytdlpVersionNumber">--</span>
+                    <span id="ytdlpUpdateBadge" class="hidden update-badge" title="Update available">●</span>
+                </div>
+                <div id="ffmpegVersion" class="flex items-center gap-2">
+                    <span class="font-medium text-[#cad5e2]">ffmpeg:</span>
+                    <span id="ffmpegVersionNumber">--</span>
+                </div>
+                <span id="lastUpdateCheck" class="text-[#62748e] text-[10px]" title="Last update check">--</span>
+            </div>
         </div>
     </footer>
 

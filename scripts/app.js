@@ -709,8 +709,16 @@ class GrabZillaApp {
             return;
         }
 
+        const btn = document.getElementById('updateDepsBtn');
+        const originalBtnHTML = btn ? btn.innerHTML : '';
+
         try {
+            // Show loading state
             this.updateStatusMessage('Checking binary versions...');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<img src="assets/icons/refresh.svg" alt="" width="16" height="16" loading="lazy" class="animate-spin">Checking...';
+            }
 
             const versions = await window.IPCManager.checkBinaryVersions();
 
@@ -734,6 +742,14 @@ class GrabZillaApp {
                         ffmpeg: ffmpeg
                     };
                     this.updateBinaryVersionDisplay(normalizedVersions);
+
+                    // Show dialog if updates are available
+                    if (ytdlp.updateAvailable) {
+                        this.showInfo({
+                            title: 'Update Available',
+                            message: `A newer version of yt-dlp is available:\nInstalled: ${ytdlp.version}\nLatest: ${ytdlp.latestVersion || 'newer version'}\n\nPlease run 'npm run setup' to update.`
+                        });
+                    }
                 }
             } else {
                 this.showError('Could not check binary versions');
@@ -742,6 +758,12 @@ class GrabZillaApp {
         } catch (error) {
             console.error('Error checking dependencies:', error);
             this.showError(`Failed to check dependencies: ${error.message}`);
+        } finally {
+            // Restore button state
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHTML || '<img src="assets/icons/refresh.svg" alt="" width="16" height="16" loading="lazy">Check for Updates';
+            }
         }
     }
 
@@ -1212,24 +1234,58 @@ class GrabZillaApp {
 
     updateBinaryVersionDisplay(versions) {
         const statusMessage = document.getElementById('statusMessage');
-        if (!statusMessage) return;
+        const ytdlpVersionNumber = document.getElementById('ytdlpVersionNumber');
+        const ytdlpUpdateBadge = document.getElementById('ytdlpUpdateBadge');
+        const ffmpegVersionNumber = document.getElementById('ffmpegVersionNumber');
+        const lastUpdateCheck = document.getElementById('lastUpdateCheck');
 
         if (!versions) {
             // Binaries missing
-            statusMessage.textContent = 'Ready to download videos - Binaries required';
+            if (statusMessage) statusMessage.textContent = 'Ready to download videos - Binaries required';
+            if (ytdlpVersionNumber) ytdlpVersionNumber.textContent = 'missing';
+            if (ffmpegVersionNumber) ffmpegVersionNumber.textContent = 'missing';
+            if (ytdlpUpdateBadge) ytdlpUpdateBadge.classList.add('hidden');
+            if (lastUpdateCheck) lastUpdateCheck.textContent = '--';
             return;
         }
 
-        // Format version strings
-        const ytdlpVersion = versions.ytdlp?.version || 'unknown';
-        const ffmpegVersion = versions.ffmpeg?.version || 'unknown';
+        // Update yt-dlp version
+        if (ytdlpVersionNumber) {
+            const ytdlpVersion = versions.ytdlp?.version || 'unknown';
+            ytdlpVersionNumber.textContent = ytdlpVersion;
+        }
 
-        // Check for updates
-        const hasUpdates = (versions.ytdlp?.updateAvailable || versions.ffmpeg?.updateAvailable);
-        const updateText = hasUpdates ? ' - Newer version available' : '';
+        // Show/hide update badge for yt-dlp
+        if (ytdlpUpdateBadge) {
+            if (versions.ytdlp?.updateAvailable) {
+                ytdlpUpdateBadge.classList.remove('hidden');
+                ytdlpUpdateBadge.title = `Update available: ${versions.ytdlp.latestVersion || 'newer version'}`;
+            } else {
+                ytdlpUpdateBadge.classList.add('hidden');
+            }
+        }
 
-        // Build status message
-        statusMessage.textContent = `Ready | yt-dlp: ${ytdlpVersion} | ffmpeg: ${ffmpegVersion}${updateText}`;
+        // Update ffmpeg version
+        if (ffmpegVersionNumber) {
+            const ffmpegVersion = versions.ffmpeg?.version || 'unknown';
+            ffmpegVersionNumber.textContent = ffmpegVersion;
+        }
+
+        // Update last check timestamp
+        if (lastUpdateCheck) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            lastUpdateCheck.textContent = `checked ${timeString}`;
+            lastUpdateCheck.title = `Last update check: ${now.toLocaleString()}`;
+        }
+
+        // Update status message
+        if (statusMessage) {
+            const hasUpdates = versions.ytdlp?.updateAvailable;
+            statusMessage.textContent = hasUpdates ?
+                'Update available for yt-dlp' :
+                'Ready to download videos';
+        }
     }
 
     updateDependenciesButtonStatus(status) {

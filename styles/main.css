@@ -823,3 +823,27 @@ header > div {
         min-height: 41px;
     }
 }
+/* Binary Version Statusline */
+.update-badge {
+    color: var(--primary-blue);
+    font-size: 16px;
+    line-height: 1;
+    animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
+#binaryVersions {
+    font-family: ui-monospace, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Menlo, Consolas, "Courier New", monospace;
+}
+
+#lastUpdateCheck {
+    font-style: italic;
+}

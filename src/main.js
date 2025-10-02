@@ -404,16 +404,17 @@ async function getCachedVersion(key, fetchFn) {
 async function checkLatestYtDlpVersion() {
   const https = require('https')
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const options = {
       hostname: 'api.github.com',
       path: '/repos/yt-dlp/yt-dlp/releases/latest',
       method: 'GET',
       headers: {
-        'User-Agent': 'GrabZilla-App',
-        'Accept': 'application/vnd.github.v3+json'
+        'User-Agent': 'GrabZilla/2.1.0 (Electron)',
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
       },
-      timeout: 5000
+      timeout: 10000
     }
 
     const req = https.request(options, (res) => {
@@ -430,21 +431,29 @@ async function checkLatestYtDlpVersion() {
             // tag_name format: "2024.01.15"
             resolve(json.tag_name || null)
           } else if (res.statusCode === 403) {
-            // Rate limited
-            reject(new Error('GitHub API rate limit exceeded'))
+            // Rate limited - return null gracefully
+            console.warn('GitHub API rate limit exceeded, skipping version check')
+            resolve(null)
           } else {
-            reject(new Error(`GitHub API returned ${res.statusCode}`))
+            console.warn(`GitHub API returned ${res.statusCode}, skipping version check`)
+            resolve(null)
           }
         } catch (error) {
-          reject(error)
+          console.warn('Error parsing GitHub API response:', error.message)
+          resolve(null)
         }
       })
     })
 
-    req.on('error', reject)
+    req.on('error', (error) => {
+      console.warn('GitHub API request error:', error.message)
+      resolve(null)
+    })
+
     req.on('timeout', () => {
       req.destroy()
-      reject(new Error('GitHub API request timeout'))
+      console.warn('GitHub API request timeout')
+      resolve(null)
     })
 
     req.end()
