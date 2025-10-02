@@ -16,6 +16,12 @@ const testSuites = [
         timeout: 60000
     },
     {
+        name: 'Service Tests',
+        command: 'npx',
+        args: ['vitest', 'run', 'tests/metadata-service.test.js'],
+        timeout: 60000
+    },
+    {
         name: 'Component Tests',
         command: 'npx',
         args: ['vitest', 'run', 'tests/status-components.test.js', 'tests/ffmpeg-conversion.test.js'],
@@ -47,7 +53,6 @@ async function runTest(suite) {
 
         const childProcess = spawn(suite.command, suite.args, {
             stdio: 'inherit',
-            shell: true,
             env: {
                 ...process.env,
                 NODE_OPTIONS: '--max-old-space-size=2048'
