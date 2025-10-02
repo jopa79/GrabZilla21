@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrabZilla 2.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-[#1d293d] text-white min-h-screen flex flex-col font-['Inter']">
+    <!-- Header - macOS Title Bar Style -->
+    <header class="bg-[#0f172b] h-[41px] flex items-center justify-center border-b border-[#314158] shrink-0 relative"
+        role="banner" aria-label="GrabZilla application header" style="-webkit-app-region: drag;">
+
+
+        <!-- Centered Title -->
+        <div class="flex items-center gap-2" style="-webkit-app-region: no-drag;">
+            <div class="bg-[#155dfc] w-6 h-6 rounded flex items-center justify-center">
+                <img src="assets/icons/logo.svg" alt="GrabZilla Logo" width="16" height="16">
+            </div>
+            <h1 class="font-medium text-base text-white tracking-[-0.3125px] leading-6">GrabZilla 2.1</h1>
+        </div>
+    </header>
+
+    <!-- Input Section - Exact Figma: 161px height -->
+    <section class="h-[161px] border-b border-[#314158] px-4 py-4 shrink-0 flex flex-col gap-4" role="region"
+        aria-label="Video URL input and configuration" aria-describedby="input-section-help">
+        <div id="input-section-help" class="sr-only">
+            Enter YouTube or Vimeo URLs to add videos to the download queue. Configure default quality and format
+            settings.
+        </div>
+        <!-- URL Input Row -->
+        <div class="flex gap-2 h-20">
+            <!-- Textarea -->
+            <textarea id="urlInput"
+                class="flex-1 bg-[#314158] border border-[#45556c] rounded-lg p-3 text-sm resize-none text-[#90a1b9] placeholder-[#90a1b9] tracking-[-0.1504px]"
+                placeholder="Paste YouTube/Vimeo URLs here (one per line)..." aria-label="YouTube and Vimeo URLs input"
+                aria-describedby="url-help"></textarea>
+            <div id="url-help" class="sr-only">Enter one URL per line. Supports YouTube and Vimeo links.</div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-2 w-[140px]">
+                <button id="addVideoBtn"
+                    class="bg-[#155dfc] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 h-9 tracking-[-0.1504px]">
+                    <img src="assets/icons/add.svg" alt="Add" width="16" height="16">
+                    Add Video
+                </button>
+                <button id="importUrlsBtn"
+                    class="border border-[#45556c] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 h-9 tracking-[-0.1504px]">
+                    <img src="assets/icons/import.svg" alt="Import" width="16" height="16">
+                    Import URLs
+                </button>
+            </div>
+        </div>
+
+        <!-- Configuration Row -->
+        <div class="flex items-center gap-4 h-8">
+            <!-- Save Path Section -->
+            <div class="flex items-center gap-2">
+                <button id="savePathBtn"
+                    class="border border-[#45556c] text-white px-3 py-2 rounded-lg font-medium flex items-center gap-2 h-8 text-sm tracking-[-0.1504px]">
+                    <img src="assets/icons/folder.svg" alt="Folder" width="16" height="16">
+                    Set Save Path...
+                </button>
+                <div
+                    class="bg-[#314158] px-3 py-1.5 rounded h-7 flex items-center text-[#cad5e2] text-sm tracking-[-0.1504px]">
+                    <span id="savePath">C:\Users\Admin\Desktop\GrabZilla_Videos</span>
+                </div>
+            </div>
+
+            <!-- Defaults Section -->
+            <div class="flex items-center gap-2">
+                <img src="assets/icons/clock.svg" alt="Clock" width="16" height="16">
+                <span class="text-[#90a1b9] text-sm tracking-[-0.1504px]">Defaults:</span>
+
+                <!-- Quality Dropdown -->
+                <select id="defaultQuality"
+                    class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-3 py-1 rounded-lg text-xs h-7 font-medium"
+                    aria-label="Default video quality">
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="4K">4K</option>
+                    <option value="1440p">1440p</option>
+                </select>
+
+                <!-- Format Dropdown -->
+                <select id="defaultFormat"
+                    class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-3 py-1 rounded-lg text-xs h-7 font-medium"
+                    aria-label="Default conversion format">
+                    <option value="None">None</option>
+                    <option value="H264">H264</option>
+                    <option value="ProRes">ProRes</option>
+                    <option value="DNxHR">DNxHR</option>
+                    <option value="Audio only">Audio only</option>
+                </select>
+
+                <!-- Filename Pattern -->
+                <div class="flex items-center gap-2">
+                    <span class="text-[#90a1b9] text-sm tracking-[-0.1504px]">Filename:</span>
+                    <input id="filenamePattern" type="text" value="%(title)s.%(ext)s"
+                        class="bg-[#314158] border border-[#45556c] text-[#62748e] px-3 py-1 rounded-lg text-sm h-7 w-48">
+                </div>
+
+                <!-- Cookie File -->
+                <div class="flex items-center gap-2">
+                    <span class="text-[#90a1b9] text-sm tracking-[-0.1504px]">Cookie:</span>
+                    <button id="cookieFileBtn"
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-2 h-7">
+                        <img src="assets/icons/folder.svg" alt="File" width="16" height="16">
+                        Select File
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video List - Flex grow to fill remaining space -->
+    <main class="flex-1 overflow-hidden" role="main" aria-label="Video download queue"
+        aria-describedby="main-content-help">
+        <div id="main-content-help" class="sr-only">
+            Video download queue. Use arrow keys to navigate, Enter or Space to select videos, Delete to remove videos.
+        </div>
+        <!-- Table Header -->
+        <div class="grid grid-cols-[40px_40px_1fr_120px_100px_120px_100px] gap-4 px-4 py-4 text-sm font-medium text-[#90a1b9] tracking-[-0.1504px]"
+            role="row" aria-label="Video list column headers">
+            <div role="columnheader" aria-label="Selection checkbox"></div>
+            <div role="columnheader" aria-label="Drag handle"></div>
+            <div role="columnheader">Title</div>
+            <div role="columnheader">Duration</div>
+            <div role="columnheader">Quality</div>
+            <div role="columnheader">Conversion</div>
+            <div role="columnheader">Status</div>
+        </div>
+
+        <!-- Video Items Container -->
+        <div id="videoList" class="px-4 pt-2 pb-4 space-y-2 overflow-y-auto h-full" role="grid"
+            aria-label="Video download queue" aria-describedby="video-list-instructions" tabindex="0">
+            <div id="video-list-instructions" class="sr-only">
+                Use arrow keys to navigate between videos. Press Enter or Space to select videos. Press Delete to remove
+                videos. Press Ctrl+A to select all videos.
+            </div>
+            <!-- Sample Video Items - Matching Figma Design -->
+
+            <!-- Video Item 1 - Ready State -->
+            <div class="video-item grid grid-cols-[40px_40px_1fr_120px_100px_120px_100px] gap-4 items-center p-2 rounded bg-[#314158] hover:bg-[#3a4a68] transition-colors duration-200"
+                data-video-id="video-1" role="gridcell" tabindex="0" aria-rowindex="1"
+                aria-describedby="video-1-description">
+                <!-- Checkbox -->
+                <div class="flex items-center justify-center">
+                    <button
+                        class="video-checkbox w-6 h-6 rounded flex items-center justify-center hover:bg-[#45556c] transition-colors"
+                        role="checkbox" aria-checked="false" aria-label="Select Interstellar 2014 Trailer" tabindex="0">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-white">
+                            <rect x="3" y="3" width="10" height="10" stroke="currentColor" stroke-width="1.5"
+                                fill="none" rx="2" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Drag Handle -->
+                <div
+                    class="flex items-center justify-center text-[#90a1b9] hover:text-white cursor-grab transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <circle cx="4" cy="4" r="1" />
+                        <circle cx="4" cy="8" r="1" />
+                        <circle cx="4" cy="12" r="1" />
+                        <circle cx="8" cy="4" r="1" />
+                        <circle cx="8" cy="8" r="1" />
+                        <circle cx="8" cy="12" r="1" />
+                        <circle cx="12" cy="4" r="1" />
+                        <circle cx="12" cy="8" r="1" />
+                        <circle cx="12" cy="12" r="1" />
+                    </svg>
+                </div>
+
+                <!-- Video Info -->
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-16 h-12 bg-[#45556c] rounded overflow-hidden flex-shrink-0">
+                        <div
+                            class="w-full h-full bg-gradient-to-br from-[#4a5568] to-[#2d3748] flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-[#90a1b9]">
+                                <path d="M8 5V19L19 12L8 5Z" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm text-white truncate font-medium">Interstellar 2014 Trailer | 4K Ultra HD
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="text-sm text-[#cad5e2] text-center">2:25</div>
+
+                <!-- Quality Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center"
+                        aria-label="Quality for Interstellar 2014 Trailer">
+                        <option value="4K" selected>4K</option>
+                        <option value="1440p">1440p</option>
+                        <option value="1080p">1080p</option>
+                        <option value="720p">720p</option>
+                    </select>
+                </div>
+
+                <!-- Format Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center"
+                        aria-label="Format for Interstellar 2014 Trailer">
+                        <option value="None" selected>None</option>
+                        <option value="H264">H264</option>
+                        <option value="ProRes">ProRes</option>
+                        <option value="DNxHR">DNxHR</option>
+                        <option value="Audio only">Audio only</option>
+                    </select>
+                </div>
+
+                <!-- Status Badge -->
+                <div class="flex justify-center status-column">
+                    <span class="status-badge ready" role="status" aria-live="polite"
+                        aria-label="Video ready for download">
+                        Ready
+                    </span>
+                </div>
+
+                <!-- Video Description for Screen Readers -->
+                <div id="video-1-description" class="sr-only">
+                    Video: Interstellar 2014 Trailer | 4K Ultra HD, Duration: 2:25, Status: Ready. Press Enter or Space
+                    to select, Delete to remove.
+                </div>
+            </div>
+
+            <!-- Video Item 2 - Downloading State -->
+            <div class="video-item grid grid-cols-[40px_40px_1fr_120px_100px_120px_100px] gap-4 items-center p-2 rounded bg-[#314158] hover:bg-[#3a4a68] transition-colors duration-200"
+                data-video-id="video-2">
+                <!-- Checkbox -->
+                <div class="flex items-center justify-center">
+                    <button
+                        class="w-6 h-6 rounded flex items-center justify-center hover:bg-[#45556c] transition-colors">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-white">
+                            <rect x="3" y="3" width="10" height="10" stroke="currentColor" stroke-width="1.5"
+                                fill="none" rx="2" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Drag Handle -->
+                <div
+                    class="flex items-center justify-center text-[#90a1b9] hover:text-white cursor-grab transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <circle cx="4" cy="4" r="1" />
+                        <circle cx="4" cy="8" r="1" />
+                        <circle cx="4" cy="12" r="1" />
+                        <circle cx="8" cy="4" r="1" />
+                        <circle cx="8" cy="8" r="1" />
+                        <circle cx="8" cy="12" r="1" />
+                        <circle cx="12" cy="4" r="1" />
+                        <circle cx="12" cy="8" r="1" />
+                        <circle cx="12" cy="12" r="1" />
+                    </svg>
+                </div>
+
+                <!-- Video Info -->
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-16 h-12 bg-[#45556c] rounded overflow-hidden flex-shrink-0">
+                        <div
+                            class="w-full h-full bg-gradient-to-br from-[#4a5568] to-[#2d3748] flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-[#90a1b9]">
+                                <path d="M8 5V19L19 12L8 5Z" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm text-white truncate font-medium">Greenland (2020) 4K Trailer | Upscaled
+                            Trailers</div>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="text-sm text-[#cad5e2] text-center">2:30</div>
+
+                <!-- Quality Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="1080p" selected>1080p</option>
+                        <option value="4K">4K</option>
+                        <option value="1440p">1440p</option>
+                        <option value="720p">720p</option>
+                    </select>
+                </div>
+
+                <!-- Format Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="ProRes" selected>ProRes</option>
+                        <option value="None">None</option>
+                        <option value="H264">H264</option>
+                        <option value="DNxHR">DNxHR</option>
+                        <option value="Audio only">Audio only</option>
+                    </select>
+                </div>
+
+                <!-- Status Badge with Integrated Progress -->
+                <div class="flex justify-center status-column">
+                    <span class="status-badge downloading" role="status" aria-live="polite" aria-label="Downloading 65%"
+                        data-progress="65">
+                        Downloading 65%
+                    </span>
+                </div>
+            </div>
+
+            <!-- Video Item 3 - Converting State -->
+            <div class="video-item grid grid-cols-[40px_40px_1fr_120px_100px_120px_100px] gap-4 items-center p-2 rounded bg-[#314158] hover:bg-[#3a4a68] transition-colors duration-200"
+                data-video-id="video-3">
+                <!-- Checkbox -->
+                <div class="flex items-center justify-center">
+                    <button
+                        class="w-6 h-6 rounded flex items-center justify-center hover:bg-[#45556c] transition-colors">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-white">
+                            <rect x="3" y="3" width="10" height="10" stroke="currentColor" stroke-width="1.5"
+                                fill="none" rx="2" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Drag Handle -->
+                <div
+                    class="flex items-center justify-center text-[#90a1b9] hover:text-white cursor-grab transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <circle cx="4" cy="4" r="1" />
+                        <circle cx="4" cy="8" r="1" />
+                        <circle cx="4" cy="12" r="1" />
+                        <circle cx="8" cy="4" r="1" />
+                        <circle cx="8" cy="8" r="1" />
+                        <circle cx="8" cy="12" r="1" />
+                        <circle cx="12" cy="4" r="1" />
+                        <circle cx="12" cy="8" r="1" />
+                        <circle cx="12" cy="12" r="1" />
+                    </svg>
+                </div>
+
+                <!-- Video Info -->
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-16 h-12 bg-[#45556c] rounded overflow-hidden flex-shrink-0">
+                        <div
+                            class="w-full h-full bg-gradient-to-br from-[#4a5568] to-[#2d3748] flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-[#90a1b9]">
+                                <path d="M8 5V19L19 12L8 5Z" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm text-white truncate font-medium">GREENLAND Trailer German Deutsch (2020)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="text-sm text-[#cad5e2] text-center">2:38</div>
+
+                <!-- Quality Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="1080p" selected>1080p</option>
+                        <option value="4K">4K</option>
+                        <option value="1440p">1440p</option>
+                        <option value="720p">720p</option>
+                    </select>
+                </div>
+
+                <!-- Format Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="H264" selected>H264</option>
+                        <option value="None">None</option>
+                        <option value="ProRes">ProRes</option>
+                        <option value="DNxHR">DNxHR</option>
+                        <option value="Audio only">Audio only</option>
+                    </select>
+                </div>
+
+                <!-- Status Badge with Integrated Progress -->
+                <div class="flex justify-center status-column">
+                    <span class="status-badge converting" role="status" aria-live="polite" aria-label="Converting 42%"
+                        data-progress="42">
+                        Converting 42%
+                    </span>
+                </div>
+            </div>
+
+            <!-- Video Item 4 - Completed State -->
+            <div class="video-item grid grid-cols-[40px_40px_1fr_120px_100px_120px_100px] gap-4 items-center p-2 rounded bg-[#314158] hover:bg-[#3a4a68] transition-colors duration-200"
+                data-video-id="video-4">
+                <!-- Checkbox -->
+                <div class="flex items-center justify-center">
+                    <button
+                        class="w-6 h-6 rounded flex items-center justify-center hover:bg-[#45556c] transition-colors">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-white">
+                            <rect x="3" y="3" width="10" height="10" stroke="currentColor" stroke-width="1.5"
+                                fill="none" rx="2" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Drag Handle -->
+                <div
+                    class="flex items-center justify-center text-[#90a1b9] hover:text-white cursor-grab transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <circle cx="4" cy="4" r="1" />
+                        <circle cx="4" cy="8" r="1" />
+                        <circle cx="4" cy="12" r="1" />
+                        <circle cx="8" cy="4" r="1" />
+                        <circle cx="8" cy="8" r="1" />
+                        <circle cx="8" cy="12" r="1" />
+                        <circle cx="12" cy="4" r="1" />
+                        <circle cx="12" cy="8" r="1" />
+                        <circle cx="12" cy="12" r="1" />
+                    </svg>
+                </div>
+
+                <!-- Video Info -->
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-16 h-12 bg-[#45556c] rounded overflow-hidden flex-shrink-0">
+                        <div
+                            class="w-full h-full bg-gradient-to-br from-[#4a5568] to-[#2d3748] flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-[#90a1b9]">
+                                <path d="M8 5V19L19 12L8 5Z" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm text-white truncate font-medium">A Quiet Place (2018) - Official Trailer -
+                            Paramount Pictures</div>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="text-sm text-[#cad5e2] text-center">1:56</div>
+
+                <!-- Quality Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="720p" selected>720p</option>
+                        <option value="4K">4K</option>
+                        <option value="1440p">1440p</option>
+                        <option value="1080p">1080p</option>
+                    </select>
+                </div>
+
+                <!-- Format Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="Audio only" selected>Audio only</option>
+                        <option value="None">None</option>
+                        <option value="H264">H264</option>
+                        <option value="ProRes">ProRes</option>
+                        <option value="DNxHR">DNxHR</option>
+                    </select>
+                </div>
+
+                <!-- Status Badge -->
+                <div class="flex justify-center status-column">
+                    <span class="status-badge completed" role="status" aria-live="polite"
+                        aria-label="Video download completed">
+                        Completed
+                    </span>
+                </div>
+            </div>
+
+            <!-- Video Item 5 - Error State -->
+            <div class="video-item grid grid-cols-[40px_40px_1fr_120px_100px_120px_100px] gap-4 items-center p-2 rounded bg-[#314158] hover:bg-[#3a4a68] transition-colors duration-200"
+                data-video-id="video-5">
+                <!-- Checkbox -->
+                <div class="flex items-center justify-center">
+                    <button
+                        class="w-6 h-6 rounded flex items-center justify-center hover:bg-[#45556c] transition-colors">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-white">
+                            <rect x="3" y="3" width="10" height="10" stroke="currentColor" stroke-width="1.5"
+                                fill="none" rx="2" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Drag Handle -->
+                <div
+                    class="flex items-center justify-center text-[#90a1b9] hover:text-white cursor-grab transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <circle cx="4" cy="4" r="1" />
+                        <circle cx="4" cy="8" r="1" />
+                        <circle cx="4" cy="12" r="1" />
+                        <circle cx="8" cy="4" r="1" />
+                        <circle cx="8" cy="8" r="1" />
+                        <circle cx="8" cy="12" r="1" />
+                        <circle cx="12" cy="4" r="1" />
+                        <circle cx="12" cy="8" r="1" />
+                        <circle cx="12" cy="12" r="1" />
+                    </svg>
+                </div>
+
+                <!-- Video Info -->
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-16 h-12 bg-[#45556c] rounded overflow-hidden flex-shrink-0">
+                        <div
+                            class="w-full h-full bg-gradient-to-br from-[#4a5568] to-[#2d3748] flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-[#90a1b9]">
+                                <path d="M8 5V19L19 12L8 5Z" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm text-white truncate font-medium">Blade Runner 2049 - Official Trailer -
+                            Warner Bros. Pictures</div>
+                    </div>
+                </div>
+
+                <!-- Duration -->
+                <div class="text-sm text-[#cad5e2] text-center">3:47</div>
+
+                <!-- Quality Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="4K" selected>4K</option>
+                        <option value="1440p">1440p</option>
+                        <option value="1080p">1080p</option>
+                        <option value="720p">720p</option>
+                    </select>
+                </div>
+
+                <!-- Format Dropdown -->
+                <div class="flex justify-center">
+                    <select
+                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="H264" selected>H264</option>
+                        <option value="None">None</option>
+                        <option value="ProRes">ProRes</option>
+                        <option value="DNxHR">DNxHR</option>
+                        <option value="Audio only">Audio only</option>
+                    </select>
+                </div>
+
+                <!-- Status Badge -->
+                <div class="flex justify-center status-column">
+                    <span class="status-badge error" role="status" aria-live="polite"
+                        aria-label="Video download failed">
+                        Error
+                    </span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Control Panel - Exact Figma: 93px height -->
+    <footer class="h-[93px] border-t border-[#314158] px-4 py-4 shrink-0 flex flex-col gap-2" role="contentinfo"
+        aria-label="Download controls and actions" aria-describedby="control-panel-help">
+        <div id="control-panel-help" class="sr-only">
+            Control panel with actions for managing downloads. Use Ctrl+D to start downloads quickly.
+        </div>
+        <!-- Button Row -->
+        <div class="flex items-center justify-between h-9">
+            <div class="flex items-center gap-2">
+                <button id="clearListBtn"
+                    class="border border-[#45556c] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 h-9 tracking-[-0.1504px]"
+                    aria-label="Clear all videos from list">
+                    <img src="assets/icons/trash.svg" alt="" width="16" height="16" loading="lazy">
+                    Clear List
+                </button>
+                <button id="updateDepsBtn"
+                    class="border border-[#45556c] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 h-9 tracking-[-0.1504px]"
+                    aria-label="Check for updates to yt-dlp and ffmpeg">
+                    <img src="assets/icons/refresh.svg" alt="" width="16" height="16" loading="lazy">
+                    Check for Updates
+                </button>
+                <button id="cancelDownloadsBtn"
+                    class="bg-[#e7000b] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 h-9 tracking-[-0.1504px]"
+                    aria-label="Cancel all active downloads">
+                    <img src="assets/icons/close.svg" alt="Cancel" width="16" height="16">
+                    Cancel Downloads
+                </button>
+            </div>
+            <button id="downloadVideosBtn"
+                class="bg-[#00a63e] text-white px-6 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 h-9 tracking-[-0.1504px]">
+                <img src="assets/icons/download.svg" alt="Download" width="16" height="16">
+                Download Videos
+            </button>
+        </div>
+
+        <!-- Status Message -->
+        <div class="text-center text-xs text-[#90a1b9] h-4">
+            <span id="statusMessage" role="status" aria-live="polite">Ready to download videos</span>
+        </div>
+    </footer>
+
+    <!-- Load modular scripts in dependency order -->
+    <script>
+        // Track script loading
+        window.scriptLoadErrors = [];
+
+        function loadScript(src, callback) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => {
+                console.log(`✓ Loaded: ${src}`);
+                if (callback) callback();
+            };
+            script.onerror = () => {
+                console.error(`✗ Failed to load: ${src}`);
+                window.scriptLoadErrors.push(src);
+                if (callback) callback();
+            };
+            document.head.appendChild(script);
+        }
+
+        // Load modular scripts in correct dependency order
+        loadScript('scripts/utils/config.js', () => {
+            loadScript('scripts/utils/url-validator.js', () => {
+                loadScript('scripts/core/event-bus.js', () => {
+                    loadScript('scripts/models/Video.js', () => {
+                        loadScript('scripts/models/AppState.js', () => {
+                            loadScript('scripts/utils/error-handler.js', () => {
+                                loadScript('scripts/utils/desktop-notifications.js', () => {
+                                    loadScript('scripts/utils/live-region-manager.js', () => {
+                                        loadScript('scripts/utils/accessibility-manager.js', () => {
+                                            loadScript('scripts/utils/keyboard-navigation.js', () => {
+                                                loadScript('scripts/utils/ipc-integration.js', () => {
+                                                    loadScript('scripts/services/metadata-service.js', () => {
+                                                        loadScript('scripts/utils/enhanced-download-methods.js', () => {
+                                                            loadScript('scripts/app.js', () => {
+                                                                loadScript('scripts/utils/download-integration-patch.js', () => {
+                                                                console.log('✅ All modular scripts loaded successfully');
+                                                                if (window.scriptLoadErrors.length > 0) {
+                                                                    console.warn('⚠️ Some scripts failed to load:', window.scriptLoadErrors);
+                                                                }
+
+                                                                // Initialize app after all scripts have loaded
+                                                                if (typeof window.initializeGrabZilla === 'function') {
+                                                                    console.log('🚀 Initializing GrabZilla app...');
+                                                                    window.initializeGrabZilla();
+                                                                } else {
+                                                                    console.error('❌ initializeGrabZilla function not found');
+                                                                }
+                                                                });
+                                                            });
+                                                        });
+                                                    });
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    </script>
+
+    <!-- Debug script -->
+    <script>
+        // Debug logging
+        console.log('All scripts loaded');
+
+        // Check if buttons exist when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded - checking buttons...');
+
+            const buttons = ['addVideoBtn', 'importUrlsBtn', 'savePathBtn', 'cookieFileBtn'];
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                console.log(`Button ${id}:`, btn ? 'FOUND' : 'NOT FOUND');
+            });
+
+            // Check if app was initialized and provide fallback
+            setTimeout(() => {
+                console.log('App instance:', window.app ? 'EXISTS' : 'NOT FOUND');
+                console.log('Script load errors:', window.scriptLoadErrors || 'none');
+
+                if (window.app) {
+                    console.log('App state:', window.app.state);
+                    console.log('App initialized successfully');
+                } else {
+                    console.log('App not initialized, setting up fallback button listeners...');
+
+                    // Create a minimal app-like object for basic functionality
+                    window.fallbackApp = {
+                        handleAddVideo: function () {
+                            const urlInput = document.getElementById('urlInput');
+                            const inputText = urlInput ? urlInput.value.trim() : '';
+
+                            if (!inputText) {
+                                alert('Please enter a URL');
+                                return;
+                            }
+
+                            console.log('Processing URLs:', inputText);
+                            alert(`Would add video(s): ${inputText}`);
+
+                            if (urlInput) urlInput.value = '';
+                        },
+
+                        handleImportUrls: function () {
+                            alert('Import URLs functionality (requires Electron)');
+                        },
+
+                        handleSelectSavePath: function () {
+                            alert('Save path selection (requires Electron)');
+                        },
+
+                        handleSelectCookieFile: function () {
+                            alert('Cookie file selection (requires Electron)');
+                        }
+                    };
+
+                    // Attach fallback event listeners
+                    const addVideoBtn = document.getElementById('addVideoBtn');
+                    if (addVideoBtn) {
+                        addVideoBtn.addEventListener('click', window.fallbackApp.handleAddVideo);
+                        console.log('✓ Fallback listener attached to Add Video button');
+                    }
+
+                    const importUrlsBtn = document.getElementById('importUrlsBtn');
+                    if (importUrlsBtn) {
+                        importUrlsBtn.addEventListener('click', window.fallbackApp.handleImportUrls);
+                        console.log('✓ Fallback listener attached to Import URLs button');
+                    }
+
+                    const savePathBtn = document.getElementById('savePathBtn');
+                    if (savePathBtn) {
+                        savePathBtn.addEventListener('click', window.fallbackApp.handleSelectSavePath);
+                        console.log('✓ Fallback listener attached to Save Path button');
+                    }
+
+                    const cookieFileBtn = document.getElementById('cookieFileBtn');
+                    if (cookieFileBtn) {
+                        cookieFileBtn.addEventListener('click', window.fallbackApp.handleSelectCookieFile);
+                        console.log('✓ Fallback listener attached to Cookie File button');
+                    }
+
+                    console.log('Fallback initialization complete');
+                }
+            }, 3000);
+        });
+
+        // Catch any errors
+        window.addEventListener('error', (e) => {
+            console.error('JavaScript Error:', e.error);
+            console.error('File:', e.filename, 'Line:', e.lineno);
+        });
+    </script>
+</body>
+
+</html>

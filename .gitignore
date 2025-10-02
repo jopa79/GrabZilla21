@@ -1,0 +1,94 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Electron build cache
+.electron-builder/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Vitest
+.vite/
+node_modules/.vite/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Cookie files (may contain sensitive data)
+*.txt
+!binaries/README.md
+
+# Binary backups
+binaries/*.old
+binaries/*.backup
+
+# App-specific
+downloads/
+*.asar.unpacked

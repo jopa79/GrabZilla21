@@ -1,0 +1,164 @@
+/**
+ * Header Component Styles
+ * 
+ * Styles for the application header including branding,
+ * window controls, and navigation elements
+ */
+
+/* Header Container */
+.header {
+    height: 60px;
+    background-color: var(--header-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    z-index: 100;
+}
+
+/* App Branding */
+.header__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header__logo {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.header__title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.header__version {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 8px;
+}
+
+/* Window Controls */
+.header__controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.window-control {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.window-control:hover {
+    transform: scale(1.1);
+}
+
+.window-control--close {
+    background-color: var(--macos-red);
+}
+
+.window-control--close:hover {
+    background-color: var(--macos-red-hover);
+}
+
+.window-control--minimize {
+    background-color: var(--macos-yellow);
+}
+
+.window-control--minimize:hover {
+    background-color: var(--macos-yellow-hover);
+}
+
+.window-control--maximize {
+    background-color: var(--macos-green);
+}
+
+.window-control--maximize:hover {
+    background-color: var(--macos-green-hover);
+}
+
+/* Window Control Icons (shown on hover) */
+.window-control::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.window-control:hover::after {
+    opacity: 1;
+}
+
+.window-control--close:hover::after {
+    content: '×';
+    font-size: 10px;
+    font-weight: bold;
+    color: #4a0000;
+}
+
+.window-control--minimize:hover::after {
+    content: '−';
+    font-size: 10px;
+    font-weight: bold;
+    color: #4a3300;
+}
+
+.window-control--maximize:hover::after {
+    content: '+';
+    font-size: 10px;
+    font-weight: bold;
+    color: #003300;
+}
+
+/* Responsive Header */
+@media (max-width: 768px) {
+    .header {
+        padding: 0 16px;
+    }
+    
+    .header__title {
+        font-size: 16px;
+    }
+    
+    .header__version {
+        display: none;
+    }
+    
+    .window-control {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* Focus States for Accessibility */
+.window-control:focus-visible {
+    outline: 2px solid var(--primary-blue);
+    outline-offset: 2px;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .window-control {
+        transition: none;
+    }
+    
+    .window-control:hover {
+        transform: none;
+    }
+}

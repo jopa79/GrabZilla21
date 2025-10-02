@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Code Quality Analyzer",
+  "description": "Monitors source code files for changes and analyzes modified code for potential improvements including code smells, design patterns, and best practices. Generates actionable suggestions for improving code quality while maintaining existing functionality.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered",
+    "patterns": [
+      "scripts/*.js",
+      "styles/*.css",
+      "index.html",
+      "*.js",
+      "*.css",
+      "*.html"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A source code file has been modified. Please analyze the changed code for potential improvements focusing on:\n\n1. **Code Smells & Anti-patterns**: Identify any code smells, duplicated code, overly complex functions, or anti-patterns\n2. **Design Patterns**: Suggest appropriate design patterns that could improve the code structure\n3. **Best Practices**: Check adherence to JavaScript/CSS/HTML best practices and modern standards\n4. **Readability**: Evaluate code clarity, naming conventions, and documentation\n5. **Maintainability**: Assess how easy the code is to modify and extend\n6. **Performance**: Identify potential performance optimizations without breaking functionality\n\nFor each issue found, provide:\n- Clear description of the problem\n- Specific code location/line references\n- Concrete improvement suggestion with example code if helpful\n- Explanation of why the change improves quality\n\nFocus on actionable suggestions that maintain existing functionality while improving code quality. Consider the project context as a YouTube downloader web application with vanilla JavaScript, Tailwind CSS, and HTML5."
+  }
+}

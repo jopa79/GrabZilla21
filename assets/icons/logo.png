@@ -1,0 +1,9 @@
+# This is a placeholder - in a real app, you would need actual PNG icons
+# For now, create a simple 512x512 PNG icon for the app
+# You can use the SVG logo as a base and convert it to PNG at different sizes:
+# - 16x16, 32x32, 48x48, 64x64, 128x128, 256x256, 512x512
+
+# For development, the SVG will work, but for production builds you need:
+# - macOS: .icns file (can be generated from PNG)
+# - Windows: .ico file (can be generated from PNG)  
+# - Linux: .png files at various sizes

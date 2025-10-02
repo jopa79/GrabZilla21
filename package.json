@@ -1,0 +1,68 @@
+{
+  "name": "grabzilla",
+  "version": "2.1.0",
+  "description": "A standalone desktop application for downloading YouTube videos",
+  "main": "src/main.js",
+  "scripts": {
+    "setup": "node setup.js",
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "test": "node run-tests.js",
+    "test:ui": "vitest --ui",
+    "test:run": "node run-tests.js",
+    "test:watch": "vitest --watch",
+    "test:unit": "vitest run tests/video-model.test.js tests/state-management.test.js tests/ipc-integration.test.js --reporter=verbose",
+    "test:validation": "vitest run tests/url-validation-simple.test.js --reporter=verbose",
+    "test:components": "vitest run tests/status-components.test.js tests/ffmpeg-conversion.test.js --reporter=verbose",
+    "test:system": "vitest run tests/cross-platform.test.js tests/error-handling.test.js --reporter=verbose",
+    "test:accessibility": "vitest run tests/accessibility.test.js --reporter=verbose",
+    "test:integration": "echo 'Integration tests require binaries - run manually if needed'",
+    "test:e2e": "echo 'E2E tests require Playwright setup - run manually if needed'",
+    "test:all": "node run-tests.js",
+    "postinstall": "node setup.js"
+  },
+  "dependencies": {
+    "electron": "^38.2.0",
+    "node-notifier": "^10.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@vitest/ui": "^3.2.4",
+    "electron-builder": "^24.0.0",
+    "jsdom": "^23.0.0",
+    "vitest": "^3.2.4"
+  },
+  "build": {
+    "appId": "com.grabzilla.app",
+    "productName": "GrabZilla",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "binaries/**/*",
+      "styles/**/*",
+      "scripts/**/*",
+      "index.html",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": "dmg",
+      "icon": "assets/icons/logo.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icons/logo.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icons/logo.png"
+    }
+  }
+}
