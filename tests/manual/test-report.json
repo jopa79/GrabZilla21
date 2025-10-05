@@ -1,0 +1,94 @@
+[
+  {
+    "name": "Short video",
+    "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+    "options": {},
+    "startTime": 1759410973927,
+    "status": "passed",
+    "duration": 3647,
+    "videoInfo": {
+      "title": "Me at the zoo",
+      "duration": "0:19",
+      "format": "18 - 320x240 (240p)",
+      "filesize": "0.75 MB"
+    }
+  },
+  {
+    "name": "Medium video",
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "options": {},
+    "startTime": 1759410977574,
+    "status": "passed",
+    "duration": 3468,
+    "videoInfo": {
+      "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+      "duration": "3:33",
+      "format": "401 - 3840x2160 (2160p)+251 - audio only (medium)",
+      "filesize": "Unknown"
+    }
+  },
+  {
+    "name": "Long video",
+    "url": "https://www.youtube.com/watch?v=_OBlgSz8sSM",
+    "options": {},
+    "startTime": 1759410981042,
+    "status": "passed",
+    "duration": 3211,
+    "videoInfo": {
+      "title": "Charlie bit my finger - again !",
+      "duration": "0:56",
+      "format": "397 - 640x480 (480p)+251 - audio only (medium)",
+      "filesize": "Unknown"
+    }
+  },
+  {
+    "name": "Small playlist",
+    "url": "https://www.youtube.com/playlist?list=PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf",
+    "options": {},
+    "startTime": 1759410984253,
+    "status": "failed",
+    "duration": 6153,
+    "error": "Failed to parse video info"
+  },
+  {
+    "name": "Shorts URL",
+    "url": "https://www.youtube.com/shorts/dQw4w9WgXcQ",
+    "options": {},
+    "startTime": 1759410990406,
+    "status": "passed",
+    "duration": 2805,
+    "videoInfo": {
+      "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+      "duration": "3:33",
+      "format": "401 - 3840x2160 (2160p)+251 - audio only (medium)",
+      "filesize": "Unknown"
+    }
+  },
+  {
+    "name": "Vimeo video",
+    "url": "https://vimeo.com/148751763",
+    "options": {},
+    "startTime": 1759410993211,
+    "status": "failed",
+    "duration": 1027,
+    "error": "Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above\nERROR: [vimeo] 148751763: The web client only works when logged-in. Use --cookies, --cookies-from-browser, --username and --password, --netrc-cmd, or --netrc (vimeo) to provide account credentials. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies\n"
+  },
+  {
+    "name": "Invalid URL",
+    "url": "https://www.youtube.com/watch?v=invalid123",
+    "options": {},
+    "startTime": 1759410994238,
+    "status": "failed",
+    "duration": 615,
+    "error": "Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above\nERROR: [youtube:truncated_id] invalid123: Incomplete YouTube ID invalid123. URL https://www.youtube.com/watch?v=invalid123 looks truncated.\n"
+  },
+  {
+    "name": "Malformed URL",
+    "url": "not-a-url",
+    "options": {},
+    "startTime": 1759410994853,
+    "status": "failed",
+    "duration": 620,
+    "error": "Deprecated Feature: Support for Python version 3.9 has been deprecated. Please update to Python 3.10 or above\nERROR: [generic] 'not-a-url' is not a valid URL\n"
+  }
+]

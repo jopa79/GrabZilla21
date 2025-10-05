@@ -122,7 +122,7 @@ describe('DownloadManager - Parallel Processing', () => {
         format: 'mp4',
         savePath: '/tmp',
         downloadFn: mockDownloadFn
-      })
+      }).catch(() => {}) // Suppress cancellation errors
 
       expect(manager.queuedDownloads[0].priority).toBe(PRIORITY.NORMAL)
       manager.cancelAll()
@@ -161,7 +161,7 @@ describe('DownloadManager - Parallel Processing', () => {
         format: 'mp4',
         savePath: '/tmp',
         downloadFn: mockDownloadFn
-      }, PRIORITY.HIGH)
+      }, PRIORITY.HIGH).catch(() => {}) // Suppress cancellation errors
 
       expect(manager.queuedDownloads[0].priority).toBe(PRIORITY.HIGH)
       manager.cancelAll()
@@ -200,7 +200,7 @@ describe('DownloadManager - Parallel Processing', () => {
         format: 'mp4',
         savePath: '/tmp',
         downloadFn: mockDownloadFn
-      }, PRIORITY.LOW)
+      }, PRIORITY.LOW).catch(() => {}) // Suppress cancellation errors
 
       manager.addDownload({
         videoId: 'high',
@@ -209,7 +209,7 @@ describe('DownloadManager - Parallel Processing', () => {
         format: 'mp4',
         savePath: '/tmp',
         downloadFn: mockDownloadFn
-      }, PRIORITY.HIGH)
+      }, PRIORITY.HIGH).catch(() => {}) // Suppress cancellation errors
 
       manager.addDownload({
         videoId: 'normal',
@@ -218,7 +218,7 @@ describe('DownloadManager - Parallel Processing', () => {
         format: 'mp4',
         savePath: '/tmp',
         downloadFn: mockDownloadFn
-      }, PRIORITY.NORMAL)
+      }, PRIORITY.NORMAL).catch(() => {}) // Suppress cancellation errors
 
       // Check queue order
       expect(manager.queuedDownloads[0].videoId).toBe('high')
@@ -262,7 +262,7 @@ describe('DownloadManager - Parallel Processing', () => {
         format: 'mp4',
         savePath: '/tmp',
         downloadFn: mockDownloadFn
-      }, PRIORITY.LOW)
+      }, PRIORITY.LOW).catch(() => {}) // Suppress cancellation errors
 
       // Change to high priority
       const changed = manager.setPriority('test1', PRIORITY.HIGH)
