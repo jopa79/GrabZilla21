@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-10-04T19:34:42.185Z",
+  "status": "green",
+  "binaries": {
+    "ytdlp": {
+      "exists": true,
+      "executable": true,
+      "version": "2025.09.26"
+    },
+    "ffmpeg": {
+      "exists": true,
+      "executable": true,
+      "version": "7.1-tessus"
+    }
+  },
+  "tests": {
+    "total": 5,
+    "passing": 4,
+    "failing": 1,
+    "passRate": 80,
+    "suites": {
+      "Core Unit Tests": false,
+      "Validation Tests": false
+    }
+  },
+  "app": {
+    "launches": true,
+    "error": null
+  },
+  "dependencies": {
+    "installed": true,
+    "count": 7
+  },
+  "files": {
+    "critical": [
+      "src/main.js",
+      "src/preload.js",
+      "src/download-manager.js",
+      "scripts/app.js",
+      "scripts/models/Video.js",
+      "scripts/models/AppState.js",
+      "scripts/services/metadata-service.js",
+      "scripts/utils/url-validator.js",
+      "scripts/utils/ipc-integration.js",
+      "index.html",
+      "styles/main.css",
+      "package.json"
+    ],
+    "missing": []
+  },
+  "health": {
+    "score": 94,
+    "issues": [
+      "Test pass rate below 95%: 80%"
+    ],
+    "recommendations": [
+      "Fix failing tests to improve stability",
+      "Project is healthy - ready for development"
+    ]
+  }
+}

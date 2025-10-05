@@ -1,0 +1,126 @@
+{
+  "systemInfo": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuCores": 16,
+    "totalMemory": 137438953472
+  },
+  "summary": {
+    "sequential": {
+      "count": 1,
+      "avgDuration": 404,
+      "minDuration": 404,
+      "maxDuration": 404,
+      "avgCPU": 0.4314356435643565,
+      "avgMemoryPeak": 62224,
+      "gpuUsed": false
+    },
+    "parallel-2": {
+      "count": 1,
+      "avgDuration": 201,
+      "minDuration": 201,
+      "maxDuration": 201,
+      "avgCPU": 0.2482587064676617,
+      "avgMemoryPeak": 30344,
+      "gpuUsed": false
+    },
+    "parallel-4": {
+      "count": 1,
+      "avgDuration": 100,
+      "minDuration": 100,
+      "maxDuration": 100,
+      "avgCPU": 0.8420000000000001,
+      "avgMemoryPeak": 26040,
+      "gpuUsed": false
+    },
+    "parallel-8": {
+      "count": 1,
+      "avgDuration": 100,
+      "minDuration": 100,
+      "maxDuration": 100,
+      "avgCPU": 1.043,
+      "avgMemoryPeak": 33776,
+      "gpuUsed": false
+    }
+  },
+  "detailed": [
+    {
+      "name": "sequential",
+      "type": "sequential",
+      "duration": 404,
+      "cpuAvg": 0.4314356435643565,
+      "memoryPeak": 62224,
+      "gpuUsed": false,
+      "downloadCount": 4,
+      "timestamp": "2025-10-02T12:29:38.389Z"
+    },
+    {
+      "name": "parallel-2",
+      "type": "parallel-2",
+      "duration": 201,
+      "cpuAvg": 0.2482587064676617,
+      "memoryPeak": 30344,
+      "gpuUsed": false,
+      "downloadCount": 4,
+      "concurrency": 2,
+      "timestamp": "2025-10-02T12:29:38.591Z"
+    },
+    {
+      "name": "parallel-4",
+      "type": "parallel-4",
+      "duration": 100,
+      "cpuAvg": 0.8420000000000001,
+      "memoryPeak": 26040,
+      "gpuUsed": false,
+      "downloadCount": 4,
+      "concurrency": 4,
+      "timestamp": "2025-10-02T12:29:38.694Z"
+    },
+    {
+      "name": "parallel-8",
+      "type": "parallel-8",
+      "duration": 100,
+      "cpuAvg": 1.043,
+      "memoryPeak": 33776,
+      "gpuUsed": false,
+      "downloadCount": 8,
+      "concurrency": 8,
+      "timestamp": "2025-10-02T12:29:38.795Z"
+    }
+  ],
+  "recommendations": [
+    {
+      "level": "success",
+      "category": "concurrency",
+      "message": "Parallel downloads (2 concurrent) are 50.2% faster than sequential. Consider increasing default concurrency.",
+      "value": {
+        "improvement": 50.24752475247525,
+        "optimalConcurrent": 2
+      }
+    },
+    {
+      "level": "success",
+      "category": "concurrency",
+      "message": "4 concurrent downloads are 50.2% faster than 2. Recommend maxConcurrent >= 4.",
+      "value": {
+        "improvement": 50.24875621890548,
+        "optimalConcurrent": 4
+      }
+    },
+    {
+      "level": "info",
+      "category": "concurrency",
+      "message": "8 concurrent downloads show diminishing returns (0.0% improvement). Recommend maxConcurrent = 4 for balanced performance.",
+      "value": {
+        "improvement": 0,
+        "optimalConcurrent": 4
+      }
+    },
+    {
+      "level": "info",
+      "category": "cpu",
+      "message": "CPU usage is low (0.6%). System can handle higher concurrency."
+    }
+  ],
+  "generatedAt": "2025-10-02T12:29:38.802Z"
+}

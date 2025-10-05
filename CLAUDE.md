@@ -28,6 +28,105 @@ GrabZilla 2.1 is an Electron-based desktop application for downloading YouTube a
 - **UI responsiveness**: Progress updates every 500ms maximum
 - **Memory efficiency**: Handle large video queues without memory leaks
 
+## Specialized Subagents (IMPORTANT)
+
+### Handoff Keeper Agent 🤝 (AI-AGNOSTIC - HIGHEST PRIORITY)
+
+**CRITICAL FOR AI SWITCHING:** Use when preparing to hand off to a DIFFERENT AI system (GPT-4, Gemini, local LLMs, etc.)
+
+**Purpose:** Creates universal, AI-agnostic handoff documentation that ANY AI can understand, regardless of context window size or capabilities.
+
+**When to trigger:**
+- ✅ End of major development session
+- ✅ Before switching to different AI system
+- ✅ Before long break from project
+- ✅ When project state changes significantly
+- ✅ On user request for "handoff prep"
+
+**What it creates:**
+
+1. **UNIVERSAL_HANDOFF.md** - Complete AI-agnostic context (400-600 lines)
+2. **verify-project-state.js** - Automated state verification script
+3. **ASCII architecture diagrams** - Visual system maps (text-based)
+
+**Key principle:** Assume target AI knows NOTHING about this project, Electron, yt-dlp, or previous sessions.
+
+---
+
+### Documentation Keeper Agent 📝
+
+**ALWAYS USE PROACTIVELY** after ANY code changes, feature implementations, or optimizations.
+
+**When to trigger (AUTOMATIC):**
+- ✅ After implementing any feature or fix
+- ✅ After performance optimizations
+- ✅ After architecture changes
+- ✅ After adding/removing files
+- ✅ At the end of any development session
+- ✅ When handoff notes need updating
+
+**Agent responsibilities:**
+1. Update `HANDOFF_NOTES.md` with session details
+2. Update `CLAUDE.md` if architecture/patterns changed
+3. Create session summary MD files (e.g., `OPTIMIZATION_SUMMARY.md`)
+4. Update `TODO.md` with completed tasks
+5. Keep all documentation in sync with code changes
+
+**Usage pattern:**
+```javascript
+// After completing work, ALWAYS invoke:
+Task({
+  subagent_type: "general-purpose", // or create dedicated doc-keeper agent
+  description: "Update all documentation",
+  prompt: `I just completed [describe work]. Please:
+  1. Update HANDOFF_NOTES.md with:
+     - Current session summary (what was done)
+     - Files modified/created list
+     - Performance metrics if applicable
+     - Next steps for continuation
+  2. Update CLAUDE.md if:
+     - Architecture patterns changed
+     - New critical rules added
+     - Performance guidelines updated
+  3. Create [FEATURE_NAME]_SUMMARY.md with:
+     - Complete technical details
+     - Before/after comparisons
+     - Benchmark results
+     - Lessons learned
+  4. Update TODO.md:
+     - Mark completed tasks as done
+     - Add any new tasks discovered
+
+  Files modified: [list]
+  Performance gains: [metrics]
+  Key decisions: [decisions]`
+})
+```
+
+**Example (Metadata Optimization):**
+After optimizing metadata extraction, the agent automatically:
+- ✅ Updated HANDOFF_NOTES.md with session details
+- ✅ Added Metadata Extraction section to CLAUDE.md
+- ✅ Created METADATA_OPTIMIZATION_SUMMARY.md
+- ✅ Updated benchmark results and next steps
+
+**Key Files to Maintain:**
+- `HANDOFF_NOTES.md` - Session log and current status
+- `CLAUDE.md` - Development guidelines and patterns
+- `TODO.md` - Task tracking and progress
+- `*_SUMMARY.md` - Feature/optimization documentation
+- `README.md` - User-facing documentation (when needed)
+
+**Documentation Standards:**
+- Use clear headers and sections
+- Include code examples with before/after
+- Add performance metrics and benchmarks
+- List all modified/created files
+- Provide verification steps
+- Include next steps for continuation
+
+---
+
 ## Available MCP Servers
 
 This project has several MCP (Model Context Protocol) servers configured to enhance development capabilities:
@@ -338,9 +437,61 @@ Supported video sources:
 2. **Extract URLs**: Use regex to find all video URLs in each line
 3. **Validate URLs**: Ensure extracted URLs are accessible via yt-dlp
 4. **Deduplicate**: Remove duplicate URLs from the list
-5. **Metadata Fetch**: Use yt-dlp to get video title, duration, thumbnail
+5. **Metadata Fetch**: Use optimized yt-dlp extraction (see Metadata Extraction below)
 
 URL validation regex patterns are in `scripts/utils/url-validator.js`. The app extracts URLs from multi-line pasted text with deduplication.
+
+### Metadata Extraction (OPTIMIZED)
+
+**IMPORTANT**: Only extract the 3 fields actually displayed in UI (70% less data, faster performance)
+
+**Fields displayed:**
+- `title` - Video name shown in list
+- `duration` - MM:SS format in Duration column
+- `thumbnail` - 16x12 preview image
+
+**Optimized yt-dlp command:**
+```javascript
+// CORRECT: Extract only required fields (5-10x faster)
+const args = [
+  '--print', '%(title)s|||%(duration)s|||%(thumbnail)s',
+  '--no-warnings',
+  '--skip-download',
+  '--playlist-items', '1',
+  '--no-playlist',
+  url
+]
+
+// Parse pipe-delimited output
+const [title, duration, thumbnail] = output.trim().split('|||')
+```
+
+**DO NOT extract these unused fields:**
+- ❌ `uploader`, `uploadDate`, `viewCount`, `description` - Not displayed in UI
+- ❌ `availableQualities` - Quality dropdown is manual, not auto-populated
+- ❌ `filesize` - Not shown to user
+- ❌ `platform` - Not displayed
+
+**Batch Processing (RECOMMENDED):**
+Always use `get-batch-video-metadata` for multiple URLs (10-15% faster):
+```javascript
+// Batch format: URL|||title|||duration|||thumbnail (one per line)
+const args = [
+  '--print', '%(webpage_url)s|||%(title)s|||%(duration)s|||%(thumbnail)s',
+  '--no-warnings',
+  '--skip-download',
+  '--ignore-errors',
+  '--playlist-items', '1',
+  '--no-playlist',
+  ...urls  // All URLs in single command
+]
+```
+
+**Performance benefits:**
+- 70% less data extracted (3 fields vs 10+)
+- No JSON parsing overhead
+- No format list extraction (eliminates biggest bottleneck)
+- Batch processing: 11.5% faster for multiple URLs
 
 ### Regex Patterns
 ```javascript

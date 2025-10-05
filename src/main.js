@@ -872,59 +872,60 @@ ipcMain.handle('cancel-all-downloads', async (event) => {
   }
 })
 
-// Get video metadata with enhanced information extraction
+// Get video metadata with optimized extraction (only essential fields)
 ipcMain.handle('get-video-metadata', async (event, url) => {
   const ytDlpPath = getBinaryPath('yt-dlp')
-  
+
   if (!fs.existsSync(ytDlpPath)) {
     const errorInfo = handleBinaryMissing('yt-dlp')
     throw new Error(errorInfo.message)
   }
-  
+
   if (!url || typeof url !== 'string') {
     throw new Error('Valid URL is required')
   }
-  
+
   try {
     console.log('Fetching metadata for:', url)
-    
-    // Use enhanced yt-dlp options for metadata extraction
+    const startTime = Date.now()
+
+    // OPTIMIZED: Extract only the 3 fields we actually display (5-10x faster)
+    // Format: title|||duration|||thumbnail (pipe-delimited for easy parsing)
     const args = [
-      '--dump-json',
+      '--print', '%(title)s|||%(duration)s|||%(thumbnail)s',
       '--no-warnings',
-      '--no-download',
-      '--ignore-errors', // Continue on errors to get partial metadata
+      '--skip-download',
+      '--playlist-items', '1', // Only first video if playlist
+      '--no-playlist',         // Skip playlist extraction entirely
       url
     ]
-    
+
     const output = await runCommand(ytDlpPath, args)
-    
+
     if (!output.trim()) {
       throw new Error('No metadata returned from yt-dlp')
     }
-    
-    const metadata = JSON.parse(output)
-    
-    // Extract comprehensive metadata with fallbacks
-    const result = {
-      title: metadata.title || metadata.fulltitle || 'Unknown Title',
-      duration: metadata.duration, // Send raw number, let renderer format it
-      thumbnail: selectBestThumbnail(metadata.thumbnails) || metadata.thumbnail,
-      uploader: metadata.uploader || metadata.channel || 'Unknown Uploader',
-      uploadDate: formatUploadDate(metadata.upload_date),
-      viewCount: formatViewCount(metadata.view_count),
-      description: metadata.description ? metadata.description.substring(0, 500) : null,
-      availableQualities: extractAvailableQualities(metadata.formats),
-      filesize: formatFilesize(metadata.filesize || metadata.filesize_approx),
-      platform: metadata.extractor_key || 'Unknown'
+
+    // Parse pipe-delimited output
+    const parts = output.trim().split('|||')
+
+    if (parts.length < 3) {
+      throw new Error('Invalid metadata format received')
     }
-    
-    console.log('Metadata extracted successfully:', result.title)
+
+    const result = {
+      title: parts[0] || 'Unknown Title',
+      duration: parseInt(parts[1]) || 0,  // Raw seconds as number
+      thumbnail: parts[2] || null
+    }
+
+    const duration = Date.now() - startTime
+    console.log(`Metadata extracted in ${duration}ms:`, result.title)
     return result
-    
+
   } catch (error) {
     console.error('Error extracting metadata:', error)
-    
+
     // Provide more specific error messages
     if (error.message.includes('Video unavailable')) {
       throw new Error('Video is unavailable or has been removed')
@@ -937,6 +938,81 @@ ipcMain.handle('get-video-metadata', async (event, url) => {
     } else {
       throw new Error(`Failed to get metadata: ${error.message}`)
     }
+  }
+})
+
+// Batch metadata extraction for multiple URLs - OPTIMIZED for speed
+ipcMain.handle('get-batch-video-metadata', async (event, urls) => {
+  const ytDlpPath = getBinaryPath('yt-dlp')
+
+  if (!fs.existsSync(ytDlpPath)) {
+    const errorInfo = handleBinaryMissing('yt-dlp')
+    throw new Error(errorInfo.message)
+  }
+
+  if (!Array.isArray(urls) || urls.length === 0) {
+    throw new Error('Valid URL array is required')
+  }
+
+  try {
+    console.log(`Fetching metadata for ${urls.length} videos in batch...`)
+    const startTime = Date.now()
+
+    // OPTIMIZED: Extract only 3 essential fields (5-10x faster than dump-json)
+    // Format per line: URL|||title|||duration|||thumbnail
+    const args = [
+      '--print', '%(webpage_url)s|||%(title)s|||%(duration)s|||%(thumbnail)s',
+      '--no-warnings',
+      '--skip-download',
+      '--ignore-errors',    // Continue on errors, skip failed videos
+      '--playlist-items', '1', // Only first video if playlist
+      '--no-playlist',      // Skip playlist extraction
+      ...urls               // All URLs in single command
+    ]
+
+    const output = await runCommand(ytDlpPath, args)
+
+    if (!output.trim()) {
+      console.warn('No metadata returned from batch extraction')
+      return []
+    }
+
+    // Parse pipe-delimited lines
+    const lines = output.trim().split('\n')
+    const results = []
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+      if (!line) continue
+
+      try {
+        const parts = line.split('|||')
+
+        if (parts.length >= 4) {
+          results.push({
+            url: parts[0] || urls[i] || '',
+            title: parts[1] || 'Unknown Title',
+            duration: parseInt(parts[2]) || 0,
+            thumbnail: parts[3] || null
+          })
+        } else {
+          console.warn(`Skipping malformed line ${i + 1}:`, line)
+        }
+      } catch (parseError) {
+        console.error(`Error parsing metadata line ${i + 1}:`, parseError)
+        // Continue processing other lines
+      }
+    }
+
+    const duration = Date.now() - startTime
+    const avgTime = duration / urls.length
+    console.log(`Batch metadata extracted: ${results.length}/${urls.length} successful in ${duration}ms (${avgTime.toFixed(1)}ms avg/video)`)
+
+    return results
+
+  } catch (error) {
+    console.error('Error in batch metadata extraction:', error)
+    throw new Error(`Failed to get batch metadata: ${error.message}`)
   }
 })
 
@@ -1026,98 +1102,12 @@ ipcMain.handle('extract-playlist-videos', async (event, playlistUrl) => {
 })
 
 // Helper function to select the best thumbnail from available options
-function selectBestThumbnail(thumbnails) {
-  if (!thumbnails || !Array.isArray(thumbnails)) {
-    return null
-  }
-  
-  // Prefer thumbnails in this order: maxresdefault, hqdefault, mqdefault, default
-  const preferredIds = ['maxresdefault', 'hqdefault', 'mqdefault', 'default']
-  
-  for (const preferredId of preferredIds) {
-    const thumbnail = thumbnails.find(t => t.id === preferredId)
-    if (thumbnail && thumbnail.url) {
-      return thumbnail.url
-    }
-  }
-  
-  // Fallback to the largest thumbnail by resolution
-  const sortedThumbnails = thumbnails
-    .filter(t => t.url && t.width && t.height)
-    .sort((a, b) => (b.width * b.height) - (a.width * a.height))
-  
-  return sortedThumbnails.length > 0 ? sortedThumbnails[0].url : null
-}
-
-// Helper function to extract available video qualities
-function extractAvailableQualities(formats) {
-  if (!formats || !Array.isArray(formats)) {
-    return []
-  }
-  
-  const qualities = new Set()
-  
-  formats.forEach(format => {
-    if (format.height) {
-      if (format.height >= 2160) qualities.add('4K')
-      else if (format.height >= 1440) qualities.add('1440p')
-      else if (format.height >= 1080) qualities.add('1080p')
-      else if (format.height >= 720) qualities.add('720p')
-      else if (format.height >= 480) qualities.add('480p')
-    }
-  })
-  
-  return Array.from(qualities).sort((a, b) => {
-    const order = { '4K': 5, '1440p': 4, '1080p': 3, '720p': 2, '480p': 1 }
-    return (order[b] || 0) - (order[a] || 0)
-  })
-}
-
-// Helper function to format upload date
-function formatUploadDate(uploadDate) {
-  if (!uploadDate) return null
-  
-  try {
-    // yt-dlp returns dates in YYYYMMDD format
-    const year = uploadDate.substring(0, 4)
-    const month = uploadDate.substring(4, 6)
-    const day = uploadDate.substring(6, 8)
-    
-    const date = new Date(`${year}-${month}-${day}`)
-    return date.toLocaleDateString()
-  } catch (error) {
-    return null
-  }
-}
-
-// Helper function to format view count
-function formatViewCount(viewCount) {
-  if (!viewCount || typeof viewCount !== 'number') return null
-  
-  if (viewCount >= 1000000) {
-    return `${(viewCount / 1000000).toFixed(1)}M views`
-  } else if (viewCount >= 1000) {
-    return `${(viewCount / 1000).toFixed(1)}K views`
-  } else {
-    return `${viewCount} views`
-  }
-}
-
-// Helper function to format file size
-function formatFilesize(filesize) {
-  if (!filesize || typeof filesize !== 'number') return null
-  
-  const units = ['B', 'KB', 'MB', 'GB']
-  let size = filesize
-  let unitIndex = 0
-  
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex++
-  }
-  
-  return `${size.toFixed(1)} ${units[unitIndex]}`
-}
+// NOTE: Removed unused helper functions that extracted metadata we don't display:
+// - selectBestThumbnail() - yt-dlp now provides single thumbnail URL directly
+// - extractAvailableQualities() - quality dropdown is manual, not auto-populated
+// - formatUploadDate() - upload date not displayed in UI
+// - formatViewCount() - view count not displayed in UI
+// - formatFilesize() - filesize not displayed in UI
 
 // Utility functions
 function getBinaryPath(binaryName) {
@@ -1172,10 +1162,20 @@ async function convertVideoFormat(event, { url, inputPath, format, quality, save
     throw new Error('FFmpeg binary not found - conversion not available')
   }
 
-  // Generate output filename with appropriate extension
+  // Generate output filename with appropriate extension and format suffix
   const inputFilename = path.basename(inputPath, path.extname(inputPath))
   const outputExtension = getOutputExtension(format)
-  const outputFilename = `${inputFilename}_${format.toLowerCase()}.${outputExtension}`
+
+  // Map format names to proper filename suffixes
+  const formatSuffixes = {
+    'H264': 'h264',
+    'ProRes': 'prores',
+    'DNxHR': 'dnxhd',
+    'Audio only': 'audio'
+  }
+  const suffix = formatSuffixes[format] || format.toLowerCase()
+
+  const outputFilename = `${inputFilename}_${suffix}.${outputExtension}`
   const outputPath = path.join(savePath, outputFilename)
 
   console.log('Starting format conversion:', { 

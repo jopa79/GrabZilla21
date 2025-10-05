@@ -26,6 +26,9 @@ class GrabZillaApp {
                 throw new Error('AppState not available');
             }
 
+            // Expose state globally for Video model to access current defaults
+            window.appState = this.state;
+
             // Set up error handling
             this.setupErrorHandling();
 
@@ -179,21 +182,22 @@ class GrabZillaApp {
         const defaultQuality = document.getElementById('defaultQuality');
         if (defaultQuality) {
             defaultQuality.addEventListener('change', (e) => {
-                this.state.updateConfig({ defaultQuality: e.target.value });
+                const newValue = e.target.value;
+                this.state.updateConfig({ defaultQuality: newValue });
+
+                // Ask if user wants to update existing videos
+                this.promptUpdateExistingVideos('quality', newValue);
             });
         }
 
         const defaultFormat = document.getElementById('defaultFormat');
         if (defaultFormat) {
             defaultFormat.addEventListener('change', (e) => {
-                this.state.updateConfig({ defaultFormat: e.target.value });
-            });
-        }
+                const newValue = e.target.value;
+                this.state.updateConfig({ defaultFormat: newValue });
 
-        const filenamePattern = document.getElementById('filenamePattern');
-        if (filenamePattern) {
-            filenamePattern.addEventListener('change', (e) => {
-                this.state.updateConfig({ filenamePattern: e.target.value });
+                // Ask if user wants to update existing videos
+                this.promptUpdateExistingVideos('format', newValue);
             });
         }
     }
@@ -512,6 +516,14 @@ class GrabZillaApp {
             if (result && result.success && result.path) {
                 this.state.updateConfig({ cookieFile: result.path });
                 this.updateStatusMessage(`Cookie file set: ${result.path}`);
+
+                // Update UI to show selected cookie file
+                const cookieFilePathElement = document.getElementById('cookieFilePath');
+                if (cookieFilePathElement) {
+                    const fileName = result.path.split('/').pop() || result.path.split('\\').pop();
+                    cookieFilePathElement.textContent = fileName;
+                    cookieFilePathElement.title = result.path;
+                }
             } else if (result && result.error) {
                 this.showError(result.error);
             } else {
@@ -817,11 +829,6 @@ class GrabZillaApp {
         if (defaultFormat) {
             defaultFormat.value = this.state.config.defaultFormat;
         }
-
-        const filenamePattern = document.getElementById('filenamePattern');
-        if (filenamePattern) {
-            filenamePattern.value = this.state.config.filenamePattern;
-        }
     }
 
     initializeVideoList() {
@@ -1095,6 +1102,42 @@ class GrabZillaApp {
     displayError(errorData) {
         const message = errorData.error?.message || errorData.message || 'An error occurred';
         this.updateStatusMessage(`Error: ${message}`);
+    }
+
+    /**
+     * Prompt user to update existing videos with new default settings
+     * @param {string} property - 'quality' or 'format'
+     * @param {string} newValue - New default value
+     */
+    promptUpdateExistingVideos(property, newValue) {
+        const allVideos = this.state.getVideos();
+        const selectedVideos = this.state.getSelectedVideos();
+
+        // Determine which videos to potentially update
+        // If videos are selected, only update those; otherwise, update all downloadable videos
+        const videosToCheck = selectedVideos.length > 0
+            ? selectedVideos.filter(v => v.status === 'ready' || v.status === 'error')
+            : allVideos.filter(v => v.status === 'ready' || v.status === 'error');
+
+        // Only prompt if there are videos that could be updated
+        if (videosToCheck.length === 0) {
+            return;
+        }
+
+        const propertyName = property === 'quality' ? 'quality' : 'format';
+        const scope = selectedVideos.length > 0 ? 'selected' : 'all';
+        const message = `Update ${scope} ${videosToCheck.length} video(s) in the list to use ${propertyName}: ${newValue}?`;
+
+        if (confirm(message)) {
+            let updatedCount = 0;
+            videosToCheck.forEach(video => {
+                this.state.updateVideo(video.id, { [property]: newValue });
+                updatedCount++;
+            });
+
+            this.updateStatusMessage(`Updated ${updatedCount} ${scope} video(s) with new ${propertyName}: ${newValue}`);
+            this.renderVideoList();
+        }
     }
 
     // Keyboard navigation

@@ -63,14 +63,15 @@ async function handleDownloadVideos() {
         let completedCount = 0;
         let errorCount = 0;
 
-        // Download videos sequentially to avoid overwhelming the system
-        for (const video of readyVideos) {
+        // PARALLEL DOWNLOADS: Start all downloads simultaneously
+        // The DownloadManager on the backend will handle concurrency limits
+        const downloadPromises = readyVideos.map(async (video) => {
             try {
-                console.log(`Starting download for video ${video.id}: ${video.title}`);
-                
-                // Update video status to downloading
-                this.state.updateVideo(video.id, { 
-                    status: 'downloading', 
+                console.log(`Queueing download for video ${video.id}: ${video.title}`);
+
+                // Update video status to downloading (queued)
+                this.state.updateVideo(video.id, {
+                    status: 'downloading',
                     progress: 0,
                     error: null
                 });
@@ -78,6 +79,7 @@ async function handleDownloadVideos() {
 
                 // Prepare download options
                 const downloadOptions = {
+                    videoId: video.id, // IMPORTANT: Pass videoId for queue management
                     url: video.url,
                     quality: video.quality,
                     format: video.format,
@@ -87,18 +89,18 @@ async function handleDownloadVideos() {
 
                 console.log(`Download options for video ${video.id}:`, downloadOptions);
 
-                // Start download
+                // Start download (returns immediately, queued in DownloadManager)
                 const result = await window.electronAPI.downloadVideo(downloadOptions);
 
                 if (result.success) {
                     // Update video status to completed
-                    this.state.updateVideo(video.id, { 
-                        status: 'completed', 
+                    this.state.updateVideo(video.id, {
+                        status: 'completed',
                         progress: 100,
                         filename: result.filename || 'Downloaded',
                         error: null
                     });
-                    
+
                     completedCount++;
                     console.log(`Successfully downloaded video ${video.id}: ${video.title}`);
                 } else {
@@ -107,20 +109,25 @@ async function handleDownloadVideos() {
 
             } catch (error) {
                 console.error(`Failed to download video ${video.id}:`, error);
-                
+
                 // Update video status to error
-                this.state.updateVideo(video.id, { 
-                    status: 'error', 
+                this.state.updateVideo(video.id, {
+                    status: 'error',
                     error: error.message,
                     progress: 0
                 });
-                
-                errorCount++;
-            }
 
-            // Update UI after each video
-            this.renderVideoList();
-        }
+                errorCount++;
+                return { success: false, videoId: video.id, error: error.message };
+            }
+        });
+
+        // Wait for ALL downloads to complete in parallel
+        console.log(`⚡ Starting ${downloadPromises.length} parallel downloads (DownloadManager handles concurrency)...`);
+        await Promise.allSettled(downloadPromises);
+
+        // Update UI after all downloads complete
+        this.renderVideoList();
 
         // Clean up progress listener
         if (progressCleanup) {
@@ -133,14 +140,14 @@ async function handleDownloadVideos() {
 
         // Show final status
         if (errorCount === 0) {
-            this.showStatus(`Successfully downloaded ${completedCount} video(s)`, 'success');
+            this.showStatus(`✅ Successfully downloaded ${completedCount} video(s) in parallel`, 'success');
         } else if (completedCount === 0) {
-            this.showStatus(`All ${errorCount} download(s) failed`, 'error');
+            this.showStatus(`❌ All ${errorCount} download(s) failed`, 'error');
         } else {
-            this.showStatus(`Downloaded ${completedCount} video(s), ${errorCount} failed`, 'warning');
+            this.showStatus(`⚠️ Downloaded ${completedCount} video(s), ${errorCount} failed`, 'warning');
         }
 
-        console.log(`Download session completed: ${completedCount} successful, ${errorCount} failed`);
+        console.log(`🏁 Download session completed: ${completedCount} successful, ${errorCount} failed`);
 
     } catch (error) {
         console.error('Error in download process:', error);

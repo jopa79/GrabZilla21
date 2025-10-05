@@ -97,13 +97,6 @@
                     <option value="Audio only">Audio only</option>
                 </select>
 
-                <!-- Filename Pattern -->
-                <div class="flex items-center gap-2">
-                    <span class="text-[#90a1b9] text-sm tracking-[-0.1504px]">Filename:</span>
-                    <input id="filenamePattern" type="text" value="%(title)s.%(ext)s"
-                        class="bg-[#314158] border border-[#45556c] text-[#62748e] px-3 py-1 rounded-lg text-sm h-7 w-48">
-                </div>
-
                 <!-- Cookie File -->
                 <div class="flex items-center gap-2">
                     <span class="text-[#90a1b9] text-sm tracking-[-0.1504px]">Cookie:</span>
@@ -112,6 +105,7 @@
                         <img src="assets/icons/folder.svg" alt="File" width="16" height="16">
                         Select File
                     </button>
+                    <span id="cookieFilePath" class="text-[#90a1b9] text-xs italic max-w-[200px] truncate" title=""></span>
                 </div>
             </div>
         </div>

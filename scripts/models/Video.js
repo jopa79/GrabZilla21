@@ -8,8 +8,14 @@ class Video {
         this.title = options.title || 'Loading...';
         this.thumbnail = options.thumbnail || 'assets/icons/placeholder.svg';
         this.duration = options.duration || '00:00';
-        this.quality = options.quality || window.AppConfig?.APP_CONFIG?.DEFAULT_QUALITY || '1080p';
-        this.format = options.format || window.AppConfig?.APP_CONFIG?.DEFAULT_FORMAT || 'None';
+
+        // Use current app state defaults if no options provided
+        const appState = window.appState || window.app?.state;
+        const defaultQuality = appState?.config?.defaultQuality || window.AppConfig?.APP_CONFIG?.DEFAULT_QUALITY || '1080p';
+        const defaultFormat = appState?.config?.defaultFormat || window.AppConfig?.APP_CONFIG?.DEFAULT_FORMAT || 'None';
+
+        this.quality = options.quality || defaultQuality;
+        this.format = options.format || defaultFormat;
         this.status = options.status || 'ready';
         this.progress = options.progress || 0;
         this.filename = options.filename || '';

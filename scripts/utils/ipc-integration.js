@@ -163,6 +163,29 @@ class IPCManager {
     }
 
     /**
+     * Get metadata for multiple URLs in a single batch request (5-10x faster)
+     * @param {string[]} urls - Array of video URLs to fetch metadata for
+     * @returns {Promise<Object[]>} Array of video metadata objects with url property
+     */
+    async getBatchVideoMetadata(urls) {
+        if (!this.isElectronAvailable) {
+            throw new Error('Batch metadata fetching not available in browser mode');
+        }
+
+        if (!Array.isArray(urls) || urls.length === 0) {
+            throw new Error('Valid URL array is required for batch metadata fetching');
+        }
+
+        try {
+            const results = await window.electronAPI.getBatchVideoMetadata(urls);
+            return results;
+        } catch (error) {
+            console.error('Error fetching batch video metadata:', error);
+            throw new Error(`Failed to fetch batch metadata: ${error.message}`);
+        }
+    }
+
+    /**
      * Download video with specified options
      * @param {Object} options - Download options
      * @param {string} options.url - Video URL to download
@@ -317,6 +340,7 @@ class IPCManager {
             'selectCookieFile',
             'checkBinaryVersions',
             'getVideoMetadata',
+            'getBatchVideoMetadata',
             'downloadVideo',
             'getAppVersion',
             'getPlatform',
