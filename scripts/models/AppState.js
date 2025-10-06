@@ -87,21 +87,7 @@ class AppState {
             }
         }
 
-        // Prefetch metadata for all unique URLs in batch (11.5% faster)
-        if (uniqueUrls.length > 0 && window.MetadataService) {
-            console.log(`[Batch Metadata] Fetching metadata for ${uniqueUrls.length} URLs...`);
-            const startTime = performance.now();
-
-            try {
-                await window.MetadataService.prefetchMetadata(uniqueUrls);
-                const duration = performance.now() - startTime;
-                console.log(`[Batch Metadata] Completed in ${Math.round(duration)}ms (${Math.round(duration / uniqueUrls.length)}ms avg/video)`);
-            } catch (error) {
-                console.warn('[Batch Metadata] Batch prefetch failed, will fall back to individual fetches:', error.message);
-            }
-        }
-
-        // Now create videos - metadata will be instantly available from cache
+        // Create videos immediately for instant UI feedback (non-blocking)
         for (const url of uniqueUrls) {
             try {
                 const video = window.Video.fromUrl(url);
@@ -110,6 +96,23 @@ class AppState {
             } catch (error) {
                 results.failed.push({ url, error: error.message });
             }
+        }
+
+        // Prefetch metadata in background (non-blocking, parallel for better UX)
+        // Videos will update automatically via Video.fromUrl() metadata fetch
+        if (uniqueUrls.length > 0 && window.MetadataService) {
+            console.log(`[Batch Metadata] Starting background fetch for ${uniqueUrls.length} URLs...`);
+            const startTime = performance.now();
+
+            // Don't await - let it run in background
+            window.MetadataService.prefetchMetadata(uniqueUrls)
+                .then(() => {
+                    const duration = performance.now() - startTime;
+                    console.log(`[Batch Metadata] Completed in ${Math.round(duration)}ms (${Math.round(duration / uniqueUrls.length)}ms avg/video)`);
+                })
+                .catch(error => {
+                    console.warn('[Batch Metadata] Batch prefetch failed:', error.message);
+                });
         }
 
         this.emit('videosAdded', { results });

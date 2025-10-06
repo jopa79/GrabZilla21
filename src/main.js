@@ -958,27 +958,62 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls) => {
     console.log(`Fetching metadata for ${urls.length} videos in batch...`)
     const startTime = Date.now()
 
-    // OPTIMIZED: Extract only 3 essential fields (5-10x faster than dump-json)
-    // Format per line: URL|||title|||duration|||thumbnail
-    const args = [
-      '--print', '%(webpage_url)s|||%(title)s|||%(duration)s|||%(thumbnail)s',
-      '--no-warnings',
-      '--skip-download',
-      '--ignore-errors',    // Continue on errors, skip failed videos
-      '--playlist-items', '1', // Only first video if playlist
-      '--no-playlist',      // Skip playlist extraction
-      ...urls               // All URLs in single command
-    ]
+    // PARALLEL OPTIMIZATION: Split URLs into chunks and process in parallel
+    // Optimal: 3 URLs per chunk, max 4 concurrent processes
+    const CHUNK_SIZE = 3
+    const MAX_PARALLEL = 4
 
-    const output = await runCommand(ytDlpPath, args)
+    const chunks = []
+    for (let i = 0; i < urls.length; i += CHUNK_SIZE) {
+      chunks.push(urls.slice(i, i + CHUNK_SIZE))
+    }
 
-    if (!output.trim()) {
-      console.warn('No metadata returned from batch extraction')
+    console.log(`Processing ${urls.length} URLs in ${chunks.length} chunks (${CHUNK_SIZE} URLs/chunk, max ${MAX_PARALLEL} parallel)`)
+
+    // Process chunks in parallel batches
+    const allResults = []
+    for (let batchStart = 0; batchStart < chunks.length; batchStart += MAX_PARALLEL) {
+      const batchChunks = chunks.slice(batchStart, batchStart + MAX_PARALLEL)
+
+      // Run chunk extractions in parallel
+      const chunkPromises = batchChunks.map(async (chunkUrls) => {
+        const args = [
+          '--print', '%(webpage_url)s|||%(title)s|||%(duration)s|||%(thumbnail)s',
+          '--no-warnings',
+          '--skip-download',
+          '--ignore-errors',
+          '--playlist-items', '1',
+          '--no-playlist',
+          ...chunkUrls
+        ]
+
+        try {
+          return await runCommand(ytDlpPath, args)
+        } catch (error) {
+          console.error(`Chunk extraction failed for ${chunkUrls.length} URLs:`, error.message)
+          return '' // Return empty on error, don't fail entire batch
+        }
+      })
+
+      const outputs = await Promise.all(chunkPromises)
+
+      // Combine outputs from this batch
+      for (const output of outputs) {
+        if (output && output.trim()) {
+          allResults.push(output.trim())
+        }
+      }
+    }
+
+    const combinedOutput = allResults.join('\n')
+
+    if (!combinedOutput.trim()) {
+      console.warn('No metadata returned from parallel batch extraction')
       return []
     }
 
     // Parse pipe-delimited lines
-    const lines = output.trim().split('\n')
+    const lines = combinedOutput.trim().split('\n')
     const results = []
 
     for (let i = 0; i < lines.length; i++) {
@@ -990,7 +1025,7 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls) => {
 
         if (parts.length >= 4) {
           results.push({
-            url: parts[0] || urls[i] || '',
+            url: parts[0] || '',
             title: parts[1] || 'Unknown Title',
             duration: parseInt(parts[2]) || 0,
             thumbnail: parts[3] || null
@@ -1006,7 +1041,7 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls) => {
 
     const duration = Date.now() - startTime
     const avgTime = duration / urls.length
-    console.log(`Batch metadata extracted: ${results.length}/${urls.length} successful in ${duration}ms (${avgTime.toFixed(1)}ms avg/video)`)
+    console.log(`Batch metadata extracted: ${results.length}/${urls.length} successful in ${duration}ms (${avgTime.toFixed(1)}ms avg/video) [PARALLEL]`)
 
     return results
 

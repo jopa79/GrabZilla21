@@ -259,6 +259,7 @@ class Video {
             if (window.MetadataService) {
                 window.MetadataService.getVideoMetadata(url)
                     .then(metadata => {
+                        const oldProperties = { ...video };
                         video.update({
                             title: metadata.title,
                             thumbnail: metadata.thumbnail,
@@ -266,13 +267,26 @@ class Video {
                             estimatedSize: metadata.filesize,
                             isFetchingMetadata: false
                         });
+
+                        // Notify AppState that video was updated so UI can re-render
+                        const appState = window.appState || window.app?.state;
+                        if (appState && appState.emit) {
+                            appState.emit('videoUpdated', { video, oldProperties });
+                        }
                     })
                     .catch(metadataError => {
                         console.warn('Failed to fetch metadata for video:', metadataError.message);
+                        const oldProperties = { ...video };
                         video.update({
                             title: video.url,
                             isFetchingMetadata: false
                         });
+
+                        // Notify AppState even on error so UI updates
+                        const appState = window.appState || window.app?.state;
+                        if (appState && appState.emit) {
+                            appState.emit('videoUpdated', { video, oldProperties });
+                        }
                     });
             }
 
