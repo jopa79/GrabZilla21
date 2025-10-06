@@ -23,6 +23,14 @@
             </div>
             <h1 class="font-medium text-base text-white tracking-[-0.3125px] leading-6">GrabZilla 2.1</h1>
         </div>
+
+        <!-- Settings Button (Right side) -->
+        <button id="settingsBtn" class="absolute right-4 text-[#cad5e2] hover:text-white transition-colors p-1" style="-webkit-app-region: no-drag;" aria-label="Open settings" title="Settings (Ctrl+,)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6m8.66-10l-5.2 3M8.54 14l-5.2 3m15.52 0l-5.2-3M8.54 10l-5.2-3"/>
+            </svg>
+        </button>
     </header>
 
     <!-- Input Section - Exact Figma: 161px height -->
@@ -57,20 +65,7 @@
         </div>
 
         <!-- Configuration Row -->
-        <div class="flex items-center gap-4 h-8">
-            <!-- Save Path Section -->
-            <div class="flex items-center gap-2">
-                <button id="savePathBtn"
-                    class="border border-[#45556c] text-white px-3 py-2 rounded-lg font-medium flex items-center gap-2 h-8 text-sm tracking-[-0.1504px]">
-                    <img src="assets/icons/folder.svg" alt="Folder" width="16" height="16">
-                    Set Save Path...
-                </button>
-                <div
-                    class="bg-[#314158] px-3 py-1.5 rounded h-7 flex items-center text-[#cad5e2] text-sm tracking-[-0.1504px]">
-                    <span id="savePath">C:\Users\Admin\Desktop\GrabZilla_Videos</span>
-                </div>
-            </div>
-
+        <div class="flex items-center justify-between gap-4 h-8">
             <!-- Defaults Section -->
             <div class="flex items-center gap-2">
                 <img src="assets/icons/clock.svg" alt="Clock" width="16" height="16">
@@ -80,34 +75,43 @@
                 <select id="defaultQuality"
                     class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-3 py-1 rounded-lg text-xs h-7 font-medium"
                     aria-label="Default video quality">
-                    <option value="1080p">1080p</option>
+                    <option value="Best">Best</option>
+                    <option value="1080p" selected>1080p</option>
                     <option value="720p">720p</option>
                     <option value="4K">4K</option>
-                    <option value="1440p">1440p</option>
                 </select>
 
                 <!-- Format Dropdown -->
                 <select id="defaultFormat"
                     class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-3 py-1 rounded-lg text-xs h-7 font-medium"
                     aria-label="Default conversion format">
-                    <option value="None">None</option>
+                    <option value="None" selected>None</option>
                     <option value="H264">H264</option>
                     <option value="ProRes">ProRes</option>
                     <option value="DNxHR">DNxHR</option>
                     <option value="Audio only">Audio only</option>
                 </select>
 
-                <!-- Cookie File -->
-                <div class="flex items-center gap-2">
-                    <span class="text-[#90a1b9] text-sm tracking-[-0.1504px]">Cookie:</span>
-                    <button id="cookieFileBtn"
-                        class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-2 h-7">
-                        <img src="assets/icons/folder.svg" alt="File" width="16" height="16">
-                        Select File
-                    </button>
-                    <span id="cookieFilePath" class="text-[#90a1b9] text-xs italic max-w-[200px] truncate" title=""></span>
+                <!-- Clipboard Monitoring -->
+                <div class="flex items-center gap-2 ml-4">
+                    <span class="text-[#90a1b9] text-sm tracking-[-0.1504px]">Clipboard:</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="clipboardMonitorToggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-[#45556c] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#155dfc]"></div>
+                        <span class="ml-2 text-xs text-[#cad5e2]">Monitor</span>
+                    </label>
                 </div>
             </div>
+
+            <!-- Settings Button -->
+            <button id="settingsBtn2"
+                class="border border-[#45556c] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 h-8 text-sm tracking-[-0.1504px] hover:bg-[#45556c] transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6m8.66-10l-5.2 3M8.54 14l-5.2 3m15.52 0l-5.2-3M8.54 10l-5.2-3"/>
+                </svg>
+                Settings
+            </button>
         </div>
     </section>
 
@@ -195,8 +199,8 @@
                     <select
                         class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center"
                         aria-label="Quality for Interstellar 2014 Trailer">
+                        <option value="Best">Best</option>
                         <option value="4K" selected>4K</option>
-                        <option value="1440p">1440p</option>
                         <option value="1080p">1080p</option>
                         <option value="720p">720p</option>
                     </select>
@@ -284,9 +288,9 @@
                 <div class="flex justify-center">
                     <select
                         class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="Best">Best</option>
                         <option value="1080p" selected>1080p</option>
                         <option value="4K">4K</option>
-                        <option value="1440p">1440p</option>
                         <option value="720p">720p</option>
                     </select>
                 </div>
@@ -366,9 +370,9 @@
                 <div class="flex justify-center">
                     <select
                         class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="Best">Best</option>
                         <option value="1080p" selected>1080p</option>
                         <option value="4K">4K</option>
-                        <option value="1440p">1440p</option>
                         <option value="720p">720p</option>
                     </select>
                 </div>
@@ -448,9 +452,9 @@
                 <div class="flex justify-center">
                     <select
                         class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="Best">Best</option>
                         <option value="720p" selected>720p</option>
                         <option value="4K">4K</option>
-                        <option value="1440p">1440p</option>
                         <option value="1080p">1080p</option>
                     </select>
                 </div>
@@ -530,8 +534,8 @@
                 <div class="flex justify-center">
                     <select
                         class="bg-[#314158] border border-[#45556c] text-[#cad5e2] px-2 py-1 rounded text-xs font-medium min-w-0 w-full text-center">
+                        <option value="Best">Best</option>
                         <option value="4K" selected>4K</option>
-                        <option value="1440p">1440p</option>
                         <option value="1080p">1080p</option>
                         <option value="720p">720p</option>
                     </select>
@@ -581,6 +585,15 @@
                     <img src="assets/icons/refresh.svg" alt="" width="16" height="16" loading="lazy">
                     Check for Updates
                 </button>
+                <button id="showHistoryBtn"
+                    class="border border-[#45556c] text-[#cad5e2] px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 h-9 tracking-[-0.1504px] hover:bg-[#45556c] hover:text-white transition-colors"
+                    aria-label="View download history">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    History
+                </button>
                 <button id="cancelDownloadsBtn"
                     class="bg-[#e7000b] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 h-9 tracking-[-0.1504px]"
                     aria-label="Cancel all active downloads">
@@ -615,6 +628,405 @@
             </div>
         </div>
     </footer>
+
+    <!-- Playlist Modal -->
+    <div id="playlistModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="bg-[#314158] rounded-lg shadow-2xl w-[800px] max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-[#45556c]">
+                <h2 id="playlistTitle" class="text-lg font-semibold text-white">Playlist Videos</h2>
+                <button id="closePlaylistModal" class="text-[#90a1b9] hover:text-white transition-colors">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Playlist Info -->
+            <div class="p-4 border-b border-[#45556c]">
+                <p id="playlistInfo" class="text-sm text-[#cad5e2]">Loading playlist...</p>
+            </div>
+
+            <!-- Video List (Scrollable) -->
+            <div id="playlistVideoList" class="flex-1 overflow-y-auto p-4 space-y-2">
+                <!-- Videos will be inserted here -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-[#45556c] flex items-center justify-between">
+                <label class="flex items-center gap-2 text-sm text-[#cad5e2] cursor-pointer">
+                    <input type="checkbox" id="selectAllPlaylistVideos" class="w-4 h-4">
+                    <span>Select All</span>
+                </label>
+                <div class="flex gap-2">
+                    <button id="cancelPlaylistBtn" class="border border-[#45556c] text-white px-4 py-2 rounded-lg text-sm">
+                        Cancel
+                    </button>
+                    <button id="downloadSelectedPlaylistBtn" class="bg-[#155dfc] text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        Download Selected
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+        <!-- Toasts will be inserted here -->
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="bg-[#314158] rounded-lg shadow-2xl w-[700px] max-h-[85vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-[#45556c]">
+                <h2 class="text-lg font-semibold text-white">Settings</h2>
+                <button id="closeSettingsModal" class="text-[#90a1b9] hover:text-white transition-colors">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-[#45556c] px-4">
+                <button class="settings-tab px-4 py-3 text-sm font-medium text-[#cad5e2] border-b-2 border-transparent hover:text-white hover:border-[#155dfc] transition-colors active" data-tab="general">
+                    General
+                </button>
+                <button class="settings-tab px-4 py-3 text-sm font-medium text-[#cad5e2] border-b-2 border-transparent hover:text-white hover:border-[#155dfc] transition-colors" data-tab="downloads">
+                    Downloads
+                </button>
+                <button class="settings-tab px-4 py-3 text-sm font-medium text-[#cad5e2] border-b-2 border-transparent hover:text-white hover:border-[#155dfc] transition-colors" data-tab="cookie">
+                    Cookie
+                </button>
+                <button class="settings-tab px-4 py-3 text-sm font-medium text-[#cad5e2] border-b-2 border-transparent hover:text-white hover:border-[#155dfc] transition-colors" data-tab="data">
+                    Data
+                </button>
+                <button class="settings-tab px-4 py-3 text-sm font-medium text-[#cad5e2] border-b-2 border-transparent hover:text-white hover:border-[#155dfc] transition-colors" data-tab="shortcuts">
+                    Shortcuts
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- General Tab -->
+                <div id="tab-general" class="settings-content space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[#cad5e2] mb-2">Default Save Location</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="settings-save-path" readonly class="flex-1 bg-[#1d293d] border border-[#45556c] rounded-lg px-3 py-2 text-sm text-[#cad5e2]">
+                            <button id="settings-change-path" class="border border-[#45556c] text-white px-4 py-2 rounded-lg text-sm">
+                                Browse
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="settings-auto-organize" class="w-4 h-4">
+                            <span class="text-sm text-[#cad5e2]">Auto-organize downloads by channel/playlist</span>
+                        </label>
+                        <p class="text-xs text-[#90a1b9] mt-1 ml-6">Creates separate folders for each channel or playlist</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-[#cad5e2] mb-2">Filename Template</label>
+                        <input type="text" id="settings-filename-template" placeholder="%(title)s" class="w-full bg-[#1d293d] border border-[#45556c] rounded-lg px-3 py-2 text-sm text-[#cad5e2]">
+                        <p class="text-xs text-[#90a1b9] mt-1">Available: %(title)s, %(channel)s, %(id)s, %(upload_date)s</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-[#cad5e2] mb-2">Max Retry Attempts</label>
+                        <input type="number" id="settings-max-retries" min="0" max="10" value="3" class="w-full bg-[#1d293d] border border-[#45556c] rounded-lg px-3 py-2 text-sm text-[#cad5e2]">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-[#cad5e2] mb-2">Request Timeout (seconds)</label>
+                        <input type="number" id="settings-timeout" min="5" max="120" value="30" class="w-full bg-[#1d293d] border border-[#45556c] rounded-lg px-3 py-2 text-sm text-[#cad5e2]">
+                    </div>
+                </div>
+
+                <!-- Downloads Tab -->
+                <div id="tab-downloads" class="settings-content space-y-4 hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-[#cad5e2] mb-2">Concurrent Downloads</label>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="settings-concurrent-downloads" min="1" max="10" value="10" class="flex-1">
+                            <span id="concurrent-value" class="text-sm text-[#cad5e2] w-8">10</span>
+                        </div>
+                        <p class="text-xs text-[#90a1b9] mt-1">Maximum number of simultaneous downloads (1-10)</p>
+                    </div>
+
+                    <div>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="settings-auto-download-subtitles" class="w-4 h-4">
+                            <span class="text-sm text-[#cad5e2]">Auto-download subtitles</span>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-[#cad5e2] mb-2">Subtitle Language</label>
+                        <select id="settings-subtitle-language" class="w-full bg-[#1d293d] border border-[#45556c] rounded-lg px-3 py-2 text-sm text-[#cad5e2]">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="it">Italian</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                            <option value="zh">Chinese</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="settings-desktop-notifications" class="w-4 h-4" checked>
+                            <span class="text-sm text-[#cad5e2]">Show desktop notifications</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Cookie Tab -->
+                <div id="tab-cookie" class="settings-content space-y-4 hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-[#cad5e2] mb-2">Cookie File (Optional)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="settings-cookie-file" readonly placeholder="No cookie file selected" class="flex-1 bg-[#1d293d] border border-[#45556c] rounded-lg px-3 py-2 text-sm text-[#cad5e2]">
+                            <button id="settings-select-cookie" class="border border-[#45556c] text-white px-4 py-2 rounded-lg text-sm">
+                                Select
+                            </button>
+                            <button id="settings-clear-cookie" class="border border-[#e7000b] text-[#e7000b] px-4 py-2 rounded-lg text-sm">
+                                Clear
+                            </button>
+                        </div>
+
+                        <!-- Cookie File Help Guide -->
+                        <div class="mt-3 bg-[#1d293d] border border-[#45556c] rounded-lg p-3 space-y-2">
+                            <div class="flex items-start gap-2">
+                                <svg width="16" height="16" class="mt-0.5 flex-shrink-0 text-[#155dfc]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                                <div class="flex-1">
+                                    <p class="text-xs font-medium text-[#cad5e2]">Why do I need a cookie file?</p>
+                                    <p class="text-xs text-[#90a1b9] mt-1">Some videos are age-restricted, private, or members-only. A cookie file lets GrabZilla download these videos by authenticating with your YouTube/Vimeo account.</p>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-[#45556c] pt-2">
+                                <p class="text-xs font-medium text-[#cad5e2] mb-2">How to get a cookie file:</p>
+                                <ol class="text-xs text-[#90a1b9] space-y-1 ml-4 list-decimal">
+                                    <li>Install a browser extension like <span class="text-[#155dfc] font-medium">"Get cookies.txt LOCALLY"</span> or <span class="text-[#155dfc] font-medium">"cookies.txt"</span></li>
+                                    <li>Log in to YouTube or Vimeo in your browser</li>
+                                    <li>Click the extension icon and export cookies for the site</li>
+                                    <li>Save the <span class="text-[#cad5e2] font-mono">cookies.txt</span> file to your computer</li>
+                                    <li>Select it here using the "Select" button above</li>
+                                </ol>
+                            </div>
+
+                            <div class="border-t border-[#45556c] pt-2">
+                                <div class="flex items-start gap-2">
+                                    <svg width="16" height="16" class="mt-0.5 flex-shrink-0 text-[#00a63e]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                        <polyline points="22 4 12 14.01 9 11.01"/>
+                                    </svg>
+                                    <p class="text-xs text-[#90a1b9]">
+                                        <span class="text-[#00a63e] font-medium">Tip:</span> Keep your cookie file updated. If downloads fail, try exporting a fresh cookie file from your browser.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Tab -->
+                <div id="tab-data" class="settings-content hidden space-y-4">
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-semibold text-white mb-3">Import & Export</h3>
+                        <div class="flex flex-col gap-2">
+                            <button id="exportListBtnSettings" class="border border-[#45556c] text-white px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-[#45556c] transition-colors">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Export Video List
+                            </button>
+                            <p class="text-xs text-[#90a1b9] ml-6">Save your current video queue to a JSON file</p>
+                        </div>
+                        <div class="flex flex-col gap-2 mt-4">
+                            <button id="importListBtnSettings" class="border border-[#45556c] text-white px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-[#45556c] transition-colors">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                Import Video List
+                            </button>
+                            <p class="text-xs text-[#90a1b9] ml-6">Load a previously saved video queue from JSON</p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-[#45556c] pt-4">
+                        <h3 class="text-sm font-semibold text-white mb-3">Binary Updates</h3>
+                        <div class="flex flex-col gap-2">
+                            <button id="updateDepsBtnSettings" class="border border-[#45556c] text-white px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-[#45556c] transition-colors">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                                </svg>
+                                Check for Binary Updates
+                            </button>
+                            <p class="text-xs text-[#90a1b9] ml-6">Check for updates to yt-dlp and ffmpeg binaries</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shortcuts Tab -->
+                <div id="tab-shortcuts" class="settings-content hidden">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center py-2 border-b border-[#45556c]">
+                            <span class="text-sm text-[#cad5e2]">Download selected videos</span>
+                            <kbd class="px-2 py-1 bg-[#1d293d] border border-[#45556c] rounded text-xs text-[#90a1b9]">Ctrl+D</kbd>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-[#45556c]">
+                            <span class="text-sm text-[#cad5e2]">Pause/Resume selected downloads</span>
+                            <kbd class="px-2 py-1 bg-[#1d293d] border border-[#45556c] rounded text-xs text-[#90a1b9]">P</kbd>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-[#45556c]">
+                            <span class="text-sm text-[#cad5e2]">Remove selected videos</span>
+                            <kbd class="px-2 py-1 bg-[#1d293d] border border-[#45556c] rounded text-xs text-[#90a1b9]">Delete</kbd>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-[#45556c]">
+                            <span class="text-sm text-[#cad5e2]">Select/Deselect video</span>
+                            <kbd class="px-2 py-1 bg-[#1d293d] border border-[#45556c] rounded text-xs text-[#90a1b9]">Space</kbd>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-[#45556c]">
+                            <span class="text-sm text-[#cad5e2]">Select all videos</span>
+                            <kbd class="px-2 py-1 bg-[#1d293d] border border-[#45556c] rounded text-xs text-[#90a1b9]">Ctrl+A</kbd>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-[#45556c]">
+                            <span class="text-sm text-[#cad5e2]">Open settings</span>
+                            <kbd class="px-2 py-1 bg-[#1d293d] border border-[#45556c] rounded text-xs text-[#90a1b9]">Ctrl+,</kbd>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-[#45556c]">
+                            <span class="text-sm text-[#cad5e2]">Show shortcuts</span>
+                            <kbd class="px-2 py-1 bg-[#1d293d] border border-[#45556c] rounded text-xs text-[#90a1b9]">Ctrl+/</kbd>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <span class="text-sm text-[#cad5e2]">Close modal</span>
+                            <kbd class="px-2 py-1 bg-[#1d293d] border border-[#45556c] rounded text-xs text-[#90a1b9]">Esc</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-[#45556c] flex justify-end gap-2">
+                <button id="cancelSettingsBtn" class="border border-[#45556c] text-white px-4 py-2 rounded-lg text-sm">
+                    Cancel
+                </button>
+                <button id="saveSettingsBtn" class="bg-[#155dfc] text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50">
+        <div class="bg-[#314158] rounded-lg shadow-2xl w-[900px] max-h-[90vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-[#45556c]">
+                <h2 class="text-lg font-semibold text-white">Download History</h2>
+                <div class="flex items-center gap-2">
+                    <button id="clearHistoryBtn" class="text-sm text-[#e7000b] hover:text-white px-3 py-1 rounded border border-[#e7000b] hover:bg-[#e7000b] transition-colors">
+                        Clear All
+                    </button>
+                    <button id="closeHistoryModal" class="text-[#90a1b9] hover:text-white transition-colors">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- History List -->
+            <div class="flex-1 overflow-y-auto p-4">
+                <div id="historyList" class="space-y-2">
+                    <!-- History entries will be inserted here -->
+                </div>
+                <div id="historyEmptyState" class="hidden flex flex-col items-center justify-center h-full text-center py-12">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-[#45556c] mb-4">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <p class="text-[#90a1b9] text-lg">No download history yet</p>
+                    <p class="text-[#62748e] text-sm mt-2">Completed downloads will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50">
+        <div class="bg-[#314158] rounded-lg shadow-2xl w-[900px] max-h-[90vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-[#45556c]">
+                <h2 id="previewTitle" class="text-lg font-semibold text-white truncate flex-1 pr-4">Video Preview</h2>
+                <button id="closePreviewModal" class="text-[#90a1b9] hover:text-white transition-colors flex-shrink-0">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Video Player -->
+            <div class="aspect-video bg-black">
+                <iframe id="previewPlayer" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+
+            <!-- Video Info -->
+            <div class="p-4 space-y-3 overflow-y-auto flex-1">
+                <div class="flex items-center gap-4 text-sm text-[#cad5e2]">
+                    <span id="previewDuration" class="flex items-center gap-1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>--:--</span>
+                    </span>
+                    <span id="previewViews" class="flex items-center gap-1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span>-- views</span>
+                    </span>
+                    <span id="previewLikes" class="flex items-center gap-1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                        </svg>
+                        <span>-- likes</span>
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-[#cad5e2] mb-1">Description</h3>
+                    <p id="previewDescription" class="text-sm text-[#90a1b9] whitespace-pre-wrap">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-[#45556c] flex justify-end gap-2">
+                <button id="closePreviewBtn" class="border border-[#45556c] text-white px-4 py-2 rounded-lg text-sm">
+                    Close
+                </button>
+                <button id="downloadFromPreviewBtn" class="bg-[#155dfc] text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    Download This Video
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Load modular scripts in dependency order -->
     <script>

@@ -19,7 +19,7 @@ export const APP_CONFIG = {
     DEFAULT_FILENAME_PATTERN: '%(title)s.%(ext)s',
     STATUS_AUTO_CLEAR_DELAY: 5000,
     INPUT_DEBOUNCE_DELAY: 300,
-    SUPPORTED_QUALITIES: ['720p', '1080p', '1440p', '4K'],
+    SUPPORTED_QUALITIES: ['Best', '720p', '1080p', '4K'],
     SUPPORTED_FORMATS: ['None', 'H264', 'ProRes', 'DNxHR', 'Audio only']
 };
 

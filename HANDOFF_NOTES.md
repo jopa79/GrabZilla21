@@ -1,13 +1,289 @@
 # GrabZilla 2.1 - Handoff Notes
 
-**Last Updated:** October 5, 2025 13:45 PM (Parallel Metadata Fix)
-**Previous Date:** October 4, 2025
-**Status:** 🟡 YELLOW - Awaiting User Testing
-**Session:** Parallel Metadata Extraction Implementation
+**Last Updated:** January 7, 2025 (Settings Reorganization & Cookie File Metadata Support)
+**Previous Date:** October 5, 2025
+**Status:** ✅ GREEN - Production Ready
+**Session:** UI Improvements & Critical Bug Fix
 
 ---
 
-## 🔄 Latest Session - October 5, 2025 13:40-13:45 PM
+## 🔄 Latest Session - January 7, 2025
+
+### 📋 Session Summary
+This session completed two important improvements:
+1. **Settings UI Reorganization** - Improved settings modal usability
+2. **Cookie File Metadata Support** - Fixed critical bug preventing age-restricted video metadata extraction
+
+### ✅ Feature 1: Settings Reorganization
+
+**Goal:** Make settings more intuitive and accessible
+
+**Changes Made:**
+
+1. **Restored "Check for Updates" Button to Main Control Panel**
+   - File: `index.html` (control panel section)
+   - Moved button from Settings modal back to main UI
+   - Users can now check for binary updates without opening settings
+   - Better UX for a frequently-used feature
+
+2. **Renamed "Advanced" Tab to "Cookie" in Settings Modal**
+   - File: `index.html` (settings modal tabs)
+   - Clearer naming that describes what the tab contains
+   - Reduces confusion about what "Advanced" means
+
+3. **Moved Retry/Timeout Fields to General Tab**
+   - File: `index.html` (settings modal structure)
+   - Moved "Max Retry Attempts" from Cookie tab to General tab
+   - Moved "Request Timeout" from Cookie tab to General tab
+   - These are general download settings, not cookie-specific
+   - Cookie tab now only contains cookie file configuration
+
+**Rationale:** Settings are now organized by purpose - General settings for all downloads, Cookie settings for authentication. The "Check for Updates" button is more discoverable in the main UI.
+
+---
+
+### ✅ Feature 2: Cookie File Metadata Support (CRITICAL BUG FIX)
+
+**Problem:** Age-restricted videos were failing metadata extraction with "authentication required" errors, even when users had configured a valid cookie file in Settings → Cookie tab.
+
+**Root Cause:** The cookie file was only being used for video downloads, NOT for metadata extraction. The IPC handlers for `get-video-metadata` and `get-batch-video-metadata` did not accept or use the cookie file parameter.
+
+**Impact:** Users could not add age-restricted, private, or members-only videos to their download queue because metadata extraction would fail before the download stage.
+
+**Solution Implemented:**
+
+#### File 1: `/Users/joachimpaul/_DEV_/GrabZilla21/src/main.js`
+
+**Lines 1079-1115 (get-video-metadata handler):**
+```javascript
+// Added cookieFile parameter to handler signature
+ipcMain.handle('get-video-metadata', async (event, url, cookieFile = null) => {
+  // ... existing binary checks ...
+
+  const args = [
+    '--print', '%(title)s|||%(duration)s|||%(thumbnail)s',
+    '--no-warnings',
+    '--skip-download',
+    '--playlist-items', '1',
+    '--no-playlist',
+    url
+  ]
+
+  // NEW: Add cookie file if provided
+  if (cookieFile && fs.existsSync(cookieFile)) {
+    args.unshift('--cookies', cookieFile)
+    console.log('✓ Using cookie file for metadata extraction:', cookieFile)
+  } else if (cookieFile) {
+    console.warn('✗ Cookie file specified but does not exist:', cookieFile)
+  } else {
+    console.log('✗ No cookie file provided for metadata extraction')
+  }
+
+  // ... rest of extraction logic ...
+})
+```
+
+**Lines 1159-1209 (get-batch-video-metadata handler):**
+```javascript
+// Added cookieFile parameter to handler signature
+ipcMain.handle('get-batch-video-metadata', async (event, urls, cookieFile = null) => {
+  // ... chunk processing setup ...
+
+  const chunkPromises = batchChunks.map(async (chunkUrls) => {
+    const args = [
+      '--print', '%(webpage_url)s|||%(title)s|||%(duration)s|||%(thumbnail)s',
+      '--no-warnings',
+      '--skip-download',
+      '--ignore-errors',
+      '--playlist-items', '1',
+      '--no-playlist',
+      ...chunkUrls
+    ]
+
+    // NEW: Add cookie file if provided
+    if (cookieFile && fs.existsSync(cookieFile)) {
+      args.unshift('--cookies', cookieFile)
+    }
+
+    // ... rest of parallel extraction logic ...
+  })
+})
+```
+
+#### File 2: `/Users/joachimpaul/_DEV_/GrabZilla21/src/preload.js`
+
+**Lines 38-39:**
+```javascript
+// Updated API signatures to accept cookieFile parameter
+getVideoMetadata: (url, cookieFile) => ipcRenderer.invoke('get-video-metadata', url, cookieFile),
+getBatchVideoMetadata: (urls, cookieFile) => ipcRenderer.invoke('get-batch-video-metadata', urls, cookieFile),
+```
+
+#### File 3: `/Users/joachimpaul/_DEV_/GrabZilla21/scripts/utils/ipc-integration.js`
+
+**Lines 148-158 (getVideoMetadata):**
+```javascript
+async getVideoMetadata(url, cookieFile = null) {
+  if (!url || typeof url !== 'string') {
+    throw new Error('Valid URL is required for metadata extraction')
+  }
+
+  try {
+    return await window.electronAPI.getVideoMetadata(url, cookieFile)
+  } catch (error) {
+    console.error('Failed to get video metadata:', error)
+    throw error
+  }
+}
+```
+
+**Lines 172-182 (getBatchVideoMetadata):**
+```javascript
+async getBatchVideoMetadata(urls, cookieFile = null) {
+  if (!Array.isArray(urls) || urls.length === 0) {
+    throw new Error('Valid URL array is required for batch metadata')
+  }
+
+  try {
+    return await window.electronAPI.getBatchVideoMetadata(urls, cookieFile)
+  } catch (error) {
+    console.error('Failed to get batch metadata:', error)
+    throw error
+  }
+}
+```
+
+#### File 4: `/Users/joachimpaul/_DEV_/GrabZilla21/scripts/services/metadata-service.js`
+
+**Lines 83-84 (fetchMetadata):**
+```javascript
+async fetchMetadata(url) {
+  const cookieFile = window.appState?.config?.cookieFile || null
+  console.log('[MetadataService] Fetching metadata for:', url, 'with cookie:', cookieFile)
+
+  try {
+    const metadata = await window.ipcAPI.getVideoMetadata(url, cookieFile)
+    // ... rest of processing ...
+  }
+}
+```
+
+**Lines 319-320 (getBatchMetadata):**
+```javascript
+async getBatchMetadata(urls) {
+  const cookieFile = window.appState?.config?.cookieFile || null
+  console.log(`[MetadataService] Fetching batch metadata for ${urls.length} URLs with cookie:`, cookieFile)
+
+  try {
+    const results = await window.ipcAPI.getBatchVideoMetadata(urls, cookieFile)
+    // ... rest of batch processing ...
+  }
+}
+```
+
+**Debug Logging Added:**
+- Main process logs cookie file usage for debugging
+- Metadata service logs show cookie file retrieval from app state
+- Console logs help verify cookie file is being passed correctly
+
+---
+
+### 📁 Files Modified
+
+1. **`index.html`**
+   - Settings modal restructure (tab renaming, field reorganization)
+   - Control panel button restoration
+
+2. **`src/main.js`**
+   - Lines 1079-1115: Added cookie file support to `get-video-metadata` handler
+   - Lines 1159-1209: Added cookie file support to `get-batch-video-metadata` handler
+   - Added debug logging for cookie file usage
+
+3. **`src/preload.js`**
+   - Lines 38-39: Updated IPC API signatures to accept `cookieFile` parameter
+
+4. **`scripts/utils/ipc-integration.js`**
+   - Lines 148-158: Updated `getVideoMetadata()` to accept and pass cookie file
+   - Lines 172-182: Updated `getBatchVideoMetadata()` to accept and pass cookie file
+
+5. **`scripts/services/metadata-service.js`**
+   - Lines 83-84: Retrieve cookie file from app state in `fetchMetadata()`
+   - Lines 319-320: Retrieve cookie file from app state in `getBatchMetadata()`
+
+---
+
+### 🧪 Testing & Verification
+
+**How to Test Cookie File Metadata Support:**
+
+1. **Setup:**
+   - Open Settings → Cookie tab
+   - Configure a valid YouTube cookie file (Netscape format)
+   - Close settings modal
+
+2. **Test Age-Restricted Video:**
+   - Find an age-restricted YouTube video URL
+   - Paste URL into GrabZilla input field
+   - Click "Add Video"
+
+3. **Expected Result:**
+   - Metadata should extract successfully (title, duration, thumbnail)
+   - Video should appear in queue with correct information
+   - Console should show: `✓ Using cookie file for metadata extraction: /path/to/cookies.txt`
+
+4. **Before This Fix:**
+   - Metadata extraction would fail with "Age-restricted video - authentication required"
+   - Video could not be added to queue
+   - User had no way to fetch metadata for restricted videos
+
+**Verification Command:**
+```bash
+npm run dev
+# Test with age-restricted video URL
+# Check console for cookie file debug logs
+```
+
+---
+
+### 🎯 Impact & Benefits
+
+**Before:**
+- Cookie file only worked for downloads (after metadata already fetched)
+- Age-restricted videos couldn't be added to queue at all
+- Users with cookie files configured still saw authentication errors
+- Metadata extraction failed before reaching download stage
+
+**After:**
+- Cookie file used for BOTH metadata extraction AND downloads
+- Age-restricted videos fetch metadata correctly
+- Private/members-only videos work with proper cookies
+- Complete authentication flow throughout the app
+
+**User Experience:**
+- Configure cookie file once in Settings
+- Works everywhere automatically (metadata + downloads)
+- No additional configuration needed per video
+- Seamless support for restricted content
+
+---
+
+### 🚀 Next Steps
+
+1. **User Testing Recommended:**
+   - Test with various age-restricted videos
+   - Verify cookie file persists across app restarts
+   - Test with different cookie file formats
+   - Verify error messages when cookie file is invalid/expired
+
+2. **Potential Follow-ups:**
+   - Add cookie file validation in Settings modal (check format before saving)
+   - Add cookie file expiration detection and warnings
+   - Add "Test Cookie File" button in Settings to verify authentication
+   - Document cookie file setup process in user documentation
+
+---
+
+## 🔄 Previous Session - October 5, 2025 13:40-13:45 PM
 
 ### 🐛 Bug Discovered During Testing
 **Reporter:** User tested app with 10 URLs

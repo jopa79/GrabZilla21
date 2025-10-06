@@ -7,6 +7,42 @@
 
 ## 📋 Complete Task List
 
+---
+
+## ✅ Recent Improvements (January 2025)
+
+### **Settings Reorganization**
+- [x] Restored "Check for Updates" button to main control panel
+- [x] Renamed "Advanced" tab to "Cookie" in Settings modal
+- [x] Moved "Max Retry Attempts" and "Request Timeout" to General tab
+- [x] Improved settings organization by purpose (General vs Cookie)
+
+### **Cookie File Metadata Support (Critical Bug Fix)**
+- [x] Added cookie file parameter to `get-video-metadata` IPC handler
+- [x] Added cookie file parameter to `get-batch-video-metadata` IPC handler
+- [x] Updated preload.js API signatures to accept cookie file
+- [x] Updated ipc-integration.js to pass cookie file parameter
+- [x] Modified MetadataService to retrieve cookie file from app state
+- [x] Added debug logging for cookie file usage
+- [x] Fixed age-restricted video metadata extraction
+- [x] Enabled private/members-only video support with authentication
+
+**Impact:** Cookie files now work for BOTH metadata extraction AND downloads, fixing a critical bug where age-restricted videos could not be added to the download queue.
+
+**Files Modified:**
+- `index.html` - Settings UI reorganization
+- `src/main.js` - Cookie file support in metadata handlers (lines 1079-1115, 1159-1209)
+- `src/preload.js` - Updated API signatures (lines 38-39)
+- `scripts/utils/ipc-integration.js` - Cookie file parameter passing (lines 148-158, 172-182)
+- `scripts/services/metadata-service.js` - Cookie file retrieval (lines 83-84, 319-320)
+
+**Documentation:**
+- `HANDOFF_NOTES.md` - Updated with session details
+- `CLAUDE.md` - Added Cookie File Support section
+- `SESSION_JAN7_SETTINGS_AND_COOKIE_FIX.md` - Comprehensive session summary with before/after comparisons
+
+---
+
 ### **Priority 1: Code Management & Current Work** 🔴
 
 - [ ] **Task 1**: Commit current changes
@@ -276,6 +312,8 @@ const args = ['--flat-playlist', '--dump-json', playlistUrl];
 - ✅ **Metadata Service**: Implemented and integrated (Phase 1)
 - ✅ **YouTube Enhancements**: Shorts & Playlists support (Phase 2)
 - ✅ **Binary Management**: Fixed with statusline (Phase 3)
+- ✅ **Settings UI**: Reorganized for better usability (January 2025)
+- ✅ **Cookie File Bug Fix**: Metadata extraction now supports cookie files (January 2025)
 - ⏳ **Parallel Processing**: Implementation pending
 - ⏳ **GPU Acceleration**: Research and implementation pending
 

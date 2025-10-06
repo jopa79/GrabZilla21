@@ -220,6 +220,69 @@ button:disabled:hover {
     white-space: nowrap;
 }
 
+/* Thumbnail Preview Hover Effect */
+.video-thumbnail-container {
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+}
+
+.video-thumbnail-container:hover {
+    z-index: 50;
+}
+
+.video-thumbnail-container img {
+    transition: all 200ms ease-out;
+}
+
+.video-thumbnail-container:hover img {
+    transform: scale(2.5);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
+    position: relative;
+    z-index: 50;
+}
+
+/* Settings Modal Tabs */
+.settings-tab.active {
+    color: white;
+    border-bottom-color: #155dfc;
+}
+
+/* Toast Notifications */
+.toast {
+    pointer-events: auto;
+    min-width: 300px;
+    max-width: 400px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.toast.removing {
+    animation: slideOut 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .grid-cols-\[40px_40px_1fr_120px_100px_120px_100px\] {
@@ -357,6 +420,13 @@ button:disabled:hover {
     color: #ffffff;
     font-weight: 500;
     position: relative;
+}
+
+/* Paused State - Muted Gray Badge */
+.status-badge.paused {
+    background-color: var(--text-muted); /* #90a1b9 */
+    color: #ffffff;
+    font-weight: 500;
 }
 
 /* Completed State - Gray Badge */

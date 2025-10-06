@@ -80,6 +80,9 @@ class MetadataService {
         }
 
         try {
+            // Get cookie file from app state if available
+            const cookieFile = window.appState?.config?.cookieFile || null;
+
             // Create timeout promise
             const timeoutPromise = new Promise((_, reject) => {
                 setTimeout(() => reject(new Error('Metadata fetch timeout')), this.timeout);
@@ -87,7 +90,7 @@ class MetadataService {
 
             // Race between fetch and timeout
             const metadata = await Promise.race([
-                window.IPCManager.getVideoMetadata(url),
+                window.IPCManager.getVideoMetadata(url, cookieFile),
                 timeoutPromise
             ]);
 
@@ -313,8 +316,11 @@ class MetadataService {
                 return cachedResults;
             }
 
+            // Get cookie file from app state if available
+            const cookieFile = window.appState?.config?.cookieFile || null;
+
             // Fetch uncached URLs in batch
-            const batchResults = await window.IPCManager.getBatchVideoMetadata(uncachedUrls);
+            const batchResults = await window.IPCManager.getBatchVideoMetadata(uncachedUrls, cookieFile);
 
             // Cache the new results
             for (const result of batchResults) {

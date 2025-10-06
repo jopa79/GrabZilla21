@@ -27,12 +27,14 @@ class AppState {
      */
     constructor() {
         this.videos = [];
+        this.history = []; // Array of completed download history entries
         this.config = {
             savePath: this.getDefaultDownloadsPath(),
             defaultQuality: '1080p',
             defaultFormat: 'None',
             filenamePattern: '%(title)s.%(ext)s',
-            cookieFile: null
+            cookieFile: null,
+            maxHistoryEntries: 100 // Maximum number of history entries to keep
         };
         this.ui = {
             isDownloading: false,
@@ -235,7 +237,63 @@ class AppState {
             error: this.getVideosByStatus('error').length
         };
     }
-    
+
+    /**
+     * Add completed video to download history
+     * @param {Video} video - Completed video to add to history
+     */
+    addToHistory(video) {
+        const historyEntry = {
+            id: video.id,
+            url: video.url,
+            title: video.title,
+            thumbnail: video.thumbnail,
+            duration: video.duration,
+            quality: video.quality,
+            format: video.format,
+            filename: video.filename,
+            downloadedAt: new Date().toISOString()
+        };
+
+        // Add to beginning of history array
+        this.history.unshift(historyEntry);
+
+        // Keep only maxHistoryEntries
+        if (this.history.length > this.config.maxHistoryEntries) {
+            this.history = this.history.slice(0, this.config.maxHistoryEntries);
+        }
+
+        this.emit('historyUpdated', { entry: historyEntry });
+    }
+
+    /**
+     * Get all history entries
+     * @returns {Array} Array of history entries
+     */
+    getHistory() {
+        return this.history;
+    }
+
+    /**
+     * Clear all history
+     */
+    clearHistory() {
+        this.history = [];
+        this.emit('historyCleared');
+    }
+
+    /**
+     * Remove specific history entry
+     * @param {string} entryId - ID of history entry to remove
+     */
+    removeHistoryEntry(entryId) {
+        const index = this.history.findIndex(entry => entry.id === entryId);
+        if (index !== -1) {
+            const removed = this.history.splice(index, 1)[0];
+            this.emit('historyEntryRemoved', { entry: removed });
+        }
+    }
+
     /**
      * Export state to JSON for persistence
      * @returns {Object} Serializable state object
@@ -243,6 +301,7 @@ class AppState {
     toJSON() {
         return {
             videos: this.videos.map(v => v.toJSON()),
+            history: this.history,
             config: this.config,
             ui: this.ui
         };
@@ -254,6 +313,7 @@ class AppState {
      */
     fromJSON(data) {
         this.videos = data.videos.map(v => Video.fromJSON(v));
+        this.history = data.history || [];
         this.config = { ...this.config, ...data.config };
         this.ui = { ...this.ui, ...data.ui };
         this.emit('stateImported', { data });

@@ -4,12 +4,14 @@
 class AppState {
     constructor() {
         this.videos = [];
+        this.history = []; // Array of completed download history entries
         this.config = {
             savePath: this.getDefaultDownloadsPath(),
             defaultQuality: window.AppConfig?.APP_CONFIG?.DEFAULT_QUALITY || '1080p',
             defaultFormat: window.AppConfig?.APP_CONFIG?.DEFAULT_FORMAT || 'None',
             filenamePattern: window.AppConfig?.APP_CONFIG?.DEFAULT_FILENAME_PATTERN || '%(title)s.%(ext)s',
-            cookieFile: null
+            cookieFile: null,
+            maxHistoryEntries: 100 // Maximum number of history entries to keep
         };
         this.ui = {
             isDownloading: false,
@@ -67,23 +69,30 @@ class AppState {
     }
 
     // Add multiple videos from URLs
-    async addVideosFromUrls(urls) {
+    async addVideosFromUrls(urls, options = {}) {
+        const { allowDuplicates = false } = options;
+
         const results = {
             successful: [],
             failed: [],
             duplicates: []
         };
 
-        // Filter out duplicates first
+        // Filter out duplicates first (unless allowDuplicates is true)
         const uniqueUrls = [];
         for (const url of urls) {
-            const normalizedUrl = window.URLValidator ? window.URLValidator.normalizeUrl(url) : url;
-            const existingVideo = this.videos.find(v => v.getNormalizedUrl() === normalizedUrl);
-
-            if (existingVideo) {
-                results.duplicates.push({ url, reason: 'URL already exists' });
-            } else {
+            if (allowDuplicates) {
+                // Skip duplicate check
                 uniqueUrls.push(url);
+            } else {
+                const normalizedUrl = window.URLValidator ? window.URLValidator.normalizeUrl(url) : url;
+                const existingVideo = this.videos.find(v => v.getNormalizedUrl() === normalizedUrl);
+
+                if (existingVideo) {
+                    results.duplicates.push({ url, reason: 'URL already exists' });
+                } else {
+                    uniqueUrls.push(url);
+                }
             }
         }
 
@@ -410,6 +419,7 @@ class AppState {
     toJSON() {
         return {
             videos: this.videos.map(v => v.toJSON()),
+            history: this.history,
             config: this.config,
             ui: {
                 ...this.ui,
@@ -426,6 +436,9 @@ class AppState {
         try {
             // Restore videos
             this.videos = (data.videos || []).map(v => window.Video.fromJSON(v));
+
+            // Restore history
+            this.history = data.history || [];
 
             // Restore config with defaults
             this.config = {
@@ -478,9 +491,55 @@ class AppState {
         this.emit('stateValidated');
     }
 
+    // Add completed video to download history
+    addToHistory(video) {
+        const historyEntry = {
+            id: video.id,
+            url: video.url,
+            title: video.title,
+            thumbnail: video.thumbnail,
+            duration: video.duration,
+            quality: video.quality,
+            format: video.format,
+            filename: video.filename,
+            downloadedAt: new Date().toISOString()
+        };
+
+        // Add to beginning of history array
+        this.history.unshift(historyEntry);
+
+        // Keep only maxHistoryEntries
+        if (this.history.length > this.config.maxHistoryEntries) {
+            this.history = this.history.slice(0, this.config.maxHistoryEntries);
+        }
+
+        this.emit('historyUpdated', { entry: historyEntry });
+    }
+
+    // Get all history entries
+    getHistory() {
+        return this.history;
+    }
+
+    // Clear all history
+    clearHistory() {
+        this.history = [];
+        this.emit('historyCleared');
+    }
+
+    // Remove specific history entry
+    removeHistoryEntry(entryId) {
+        const index = this.history.findIndex(entry => entry.id === entryId);
+        if (index !== -1) {
+            const removed = this.history.splice(index, 1)[0];
+            this.emit('historyEntryRemoved', { entry: removed });
+        }
+    }
+
     // Reset to initial state
     reset() {
         this.videos = [];
+        this.history = [];
         this.ui.selectedVideos = [];
         this.ui.currentFocusIndex = -1;
         this.downloadQueue = [];

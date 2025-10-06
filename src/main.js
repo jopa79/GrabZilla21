@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Notification } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, Notification, clipboard } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const { spawn } = require('child_process')
@@ -180,6 +180,176 @@ ipcMain.handle('select-cookie-file', async () => {
       success: false, 
       error: `Failed to open file selector: ${error.message}` 
     }
+  }
+})
+
+// Open downloads folder in system file explorer
+ipcMain.handle('open-downloads-folder', async (event, folderPath) => {
+  try {
+    if (!folderPath || typeof folderPath !== 'string') {
+      throw new Error('Valid folder path is required')
+    }
+
+    // Check if folder exists
+    if (!fs.existsSync(folderPath)) {
+      return {
+        success: false,
+        error: 'Folder does not exist. Please download a video first.'
+      }
+    }
+
+    // Open folder in system file explorer
+    // shell.openPath() is cross-platform (macOS Finder, Windows Explorer, Linux file manager)
+    await shell.openPath(folderPath)
+
+    console.log('Opened folder:', folderPath)
+    return { success: true }
+
+  } catch (error) {
+    console.error('Error opening folder:', error)
+    return {
+      success: false,
+      error: `Failed to open folder: ${error.message}`
+    }
+  }
+})
+
+// Check if file exists
+ipcMain.handle('check-file-exists', async (event, filePath) => {
+  try {
+    if (!filePath || typeof filePath !== 'string') {
+      return { exists: false }
+    }
+
+    const exists = fs.existsSync(filePath)
+    return { exists }
+
+  } catch (error) {
+    console.error('Error checking file existence:', error)
+    return { exists: false }
+  }
+})
+
+// Clipboard monitoring
+let clipboardMonitorInterval = null
+let lastClipboardText = ''
+
+ipcMain.handle('start-clipboard-monitor', async (event) => {
+  try {
+    if (clipboardMonitorInterval) {
+      return { success: false, message: 'Already monitoring' }
+    }
+
+    lastClipboardText = clipboard.readText()
+
+    clipboardMonitorInterval = setInterval(() => {
+      const currentText = clipboard.readText()
+
+      if (currentText && currentText !== lastClipboardText) {
+        lastClipboardText = currentText
+
+        // Check if it contains a video URL
+        const youtubeMatch = currentText.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+        const vimeoMatch = currentText.match(/(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/)
+
+        if (youtubeMatch || vimeoMatch) {
+          event.sender.send('clipboard-url-detected', currentText)
+        }
+      }
+    }, 1000) // Check every second
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error starting clipboard monitor:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('stop-clipboard-monitor', async (event) => {
+  try {
+    if (clipboardMonitorInterval) {
+      clearInterval(clipboardMonitorInterval)
+      clipboardMonitorInterval = null
+    }
+    return { success: true }
+  } catch (error) {
+    console.error('Error stopping clipboard monitor:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+// Export video list to JSON file
+ipcMain.handle('export-video-list', async (event, videos) => {
+  try {
+    const { filePath } = await dialog.showSaveDialog({
+      title: 'Export Video List',
+      defaultPath: `grabzilla-videos-${Date.now()}.json`,
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] }
+      ]
+    })
+
+    if (!filePath) {
+      return { success: false, cancelled: true }
+    }
+
+    const exportData = {
+      version: '2.1.0',
+      exportDate: new Date().toISOString(),
+      videos: videos.map(video => ({
+        url: video.url,
+        title: video.title,
+        thumbnail: video.thumbnail,
+        duration: video.duration,
+        quality: video.quality,
+        format: video.format,
+        status: video.status === 'completed' ? 'ready' : video.status, // Reset completed to ready
+        filename: video.filename || null
+      }))
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(exportData, null, 2), 'utf-8')
+    return { success: true, filePath }
+  } catch (error) {
+    console.error('Error exporting video list:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+// Import video list from JSON file
+ipcMain.handle('import-video-list', async (event) => {
+  try {
+    const { filePaths } = await dialog.showOpenDialog({
+      title: 'Import Video List',
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] }
+      ],
+      properties: ['openFile']
+    })
+
+    if (!filePaths || filePaths.length === 0) {
+      return { success: false, cancelled: true }
+    }
+
+    const fileContent = fs.readFileSync(filePaths[0], 'utf-8')
+    const importData = JSON.parse(fileContent)
+
+    // Validate file format
+    if (!importData.videos || !Array.isArray(importData.videos)) {
+      return { success: false, error: 'Invalid file format: missing videos array' }
+    }
+
+    // Validate each video has required fields
+    for (const video of importData.videos) {
+      if (!video.url) {
+        return { success: false, error: 'Invalid file format: video missing URL' }
+      }
+    }
+
+    return { success: true, videos: importData.videos }
+  } catch (error) {
+    console.error('Error importing video list:', error)
+    return { success: false, error: error.message }
   }
 })
 
@@ -631,6 +801,7 @@ async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, re
   const args = [
     '--newline', // Force progress on new lines for better parsing
     '--no-warnings', // Reduce noise in output
+    '--continue', // Resume interrupted downloads
     '-f', getQualityFormat(quality),
     '-o', path.join(savePath, '%(title)s.%(ext)s'),
     url
@@ -675,11 +846,17 @@ async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, re
           // Adjust progress if conversion is required (download is only 70% of total)
           const adjustedProgress = requiresConversion ? Math.round(progress * 0.7) : progress
 
+          // Extract speed and ETA
+          const speedMatch = line.match(/at\s+([\d.]+\s*[KMG]?i?B\/s)/)
+          const etaMatch = line.match(/ETA\s+(\d+:\d+)/)
+
           const progressData = {
             url,
             progress: adjustedProgress,
             status: 'downloading',
-            stage: 'download'
+            stage: 'download',
+            speed: speedMatch ? speedMatch[1] : null,
+            eta: etaMatch ? etaMatch[1] : null
           }
 
           // Send to renderer
@@ -872,8 +1049,34 @@ ipcMain.handle('cancel-all-downloads', async (event) => {
   }
 })
 
+ipcMain.handle('pause-download', async (event, videoId) => {
+  try {
+    const paused = downloadManager.pauseDownload(videoId)
+    return {
+      success: paused,
+      message: paused ? 'Download paused' : 'Download not found or cannot be paused'
+    }
+  } catch (error) {
+    console.error('Error pausing download:', error)
+    throw new Error(`Failed to pause download: ${error.message}`)
+  }
+})
+
+ipcMain.handle('resume-download', async (event, videoId) => {
+  try {
+    const resumed = downloadManager.resumeDownload(videoId)
+    return {
+      success: resumed,
+      message: resumed ? 'Download resumed' : 'Download not found or cannot be resumed'
+    }
+  } catch (error) {
+    console.error('Error resuming download:', error)
+    throw new Error(`Failed to resume download: ${error.message}`)
+  }
+})
+
 // Get video metadata with optimized extraction (only essential fields)
-ipcMain.handle('get-video-metadata', async (event, url) => {
+ipcMain.handle('get-video-metadata', async (event, url, cookieFile = null) => {
   const ytDlpPath = getBinaryPath('yt-dlp')
 
   if (!fs.existsSync(ytDlpPath)) {
@@ -887,6 +1090,7 @@ ipcMain.handle('get-video-metadata', async (event, url) => {
 
   try {
     console.log('Fetching metadata for:', url)
+    console.log('Cookie file parameter received:', cookieFile)
     const startTime = Date.now()
 
     // OPTIMIZED: Extract only the 3 fields we actually display (5-10x faster)
@@ -899,6 +1103,16 @@ ipcMain.handle('get-video-metadata', async (event, url) => {
       '--no-playlist',         // Skip playlist extraction entirely
       url
     ]
+
+    // Add cookie file if provided (for age-restricted/private videos)
+    if (cookieFile && fs.existsSync(cookieFile)) {
+      args.unshift('--cookies', cookieFile)
+      console.log('✓ Using cookie file for metadata extraction:', cookieFile)
+    } else if (cookieFile) {
+      console.warn('✗ Cookie file specified but does not exist:', cookieFile)
+    } else {
+      console.log('✗ No cookie file provided for metadata extraction')
+    }
 
     const output = await runCommand(ytDlpPath, args)
 
@@ -942,7 +1156,7 @@ ipcMain.handle('get-video-metadata', async (event, url) => {
 })
 
 // Batch metadata extraction for multiple URLs - OPTIMIZED for speed
-ipcMain.handle('get-batch-video-metadata', async (event, urls) => {
+ipcMain.handle('get-batch-video-metadata', async (event, urls, cookieFile = null) => {
   const ytDlpPath = getBinaryPath('yt-dlp')
 
   if (!fs.existsSync(ytDlpPath)) {
@@ -986,6 +1200,11 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls) => {
           '--no-playlist',
           ...chunkUrls
         ]
+
+        // Add cookie file if provided (for age-restricted/private videos)
+        if (cookieFile && fs.existsSync(cookieFile)) {
+          args.unshift('--cookies', cookieFile)
+        }
 
         try {
           return await runCommand(ytDlpPath, args)

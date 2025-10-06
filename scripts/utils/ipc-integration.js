@@ -142,9 +142,10 @@ class IPCManager {
     /**
      * Get video metadata from URL
      * @param {string} url - Video URL to fetch metadata for
+     * @param {string} cookieFile - Optional path to cookie file for authentication
      * @returns {Promise<Object>} Video metadata (title, duration, thumbnail, etc.)
      */
-    async getVideoMetadata(url) {
+    async getVideoMetadata(url, cookieFile = null) {
         if (!this.isElectronAvailable) {
             throw new Error('Metadata fetching not available in browser mode');
         }
@@ -154,7 +155,7 @@ class IPCManager {
         }
 
         try {
-            const metadata = await window.electronAPI.getVideoMetadata(url);
+            const metadata = await window.electronAPI.getVideoMetadata(url, cookieFile);
             return metadata;
         } catch (error) {
             console.error('Error fetching video metadata:', error);
@@ -165,9 +166,10 @@ class IPCManager {
     /**
      * Get metadata for multiple URLs in a single batch request (5-10x faster)
      * @param {string[]} urls - Array of video URLs to fetch metadata for
+     * @param {string} cookieFile - Optional path to cookie file for authentication
      * @returns {Promise<Object[]>} Array of video metadata objects with url property
      */
-    async getBatchVideoMetadata(urls) {
+    async getBatchVideoMetadata(urls, cookieFile = null) {
         if (!this.isElectronAvailable) {
             throw new Error('Batch metadata fetching not available in browser mode');
         }
@@ -177,7 +179,7 @@ class IPCManager {
         }
 
         try {
-            const results = await window.electronAPI.getBatchVideoMetadata(urls);
+            const results = await window.electronAPI.getBatchVideoMetadata(urls, cookieFile);
             return results;
         } catch (error) {
             console.error('Error fetching batch video metadata:', error);

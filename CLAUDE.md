@@ -331,6 +331,42 @@ All user inputs must be validated before passing to binaries to prevent command 
 - **Path Sanitization**: Validate all file paths for downloads and cookie files
 - **Cookie File Validation**: Verify file exists, is readable, and not empty
 
+### Cookie File Support
+
+**CRITICAL:** Cookie files must be used for BOTH metadata extraction AND video downloads.
+
+**Architecture:**
+1. Cookie file path stored in `window.appState.config.cookieFile`
+2. Retrieved by MetadataService before every metadata request
+3. Passed through IPC chain: Renderer → Preload → Main Process
+4. Added to yt-dlp command with `--cookies` flag
+
+**Implementation Pattern:**
+```javascript
+// ✅ CORRECT: Retrieve cookie file from app state
+const cookieFile = window.appState?.config?.cookieFile || null
+
+// Pass to IPC calls
+await window.ipcAPI.getVideoMetadata(url, cookieFile)
+await window.ipcAPI.getBatchVideoMetadata(urls, cookieFile)
+
+// Main process adds to yt-dlp args if present
+if (cookieFile && fs.existsSync(cookieFile)) {
+  args.unshift('--cookies', cookieFile)
+}
+```
+
+**Use Cases:**
+- Age-restricted videos (YouTube age verification)
+- Private videos (with proper authentication)
+- Members-only content (YouTube memberships/Patreon)
+- Region-locked content (with appropriate cookies)
+
+**Why This Matters:**
+- Without cookie file in metadata extraction, age-restricted videos fail with "authentication required" error
+- User cannot add video to queue if metadata extraction fails
+- Cookie file configured in Settings must work for entire workflow, not just downloads
+
 ### Context Isolation
 
 The app uses Electron security best practices:

@@ -20,7 +20,12 @@ class Video {
         this.progress = options.progress || 0;
         this.filename = options.filename || '';
         this.error = options.error || null;
+        this.retryCount = options.retryCount || 0;
+        this.maxRetries = options.maxRetries || 3;
+        this.downloadSpeed = options.downloadSpeed || null;
+        this.eta = options.eta || null;
         this.isFetchingMetadata = options.isFetchingMetadata !== undefined ? options.isFetchingMetadata : false;
+        this.requiresAuth = options.requiresAuth || false; // Video requires cookie file for download
         this.createdAt = new Date();
         this.updatedAt = new Date();
     }
@@ -48,7 +53,7 @@ class Video {
     update(properties) {
         const allowedProperties = [
             'title', 'thumbnail', 'duration', 'quality', 'format',
-            'status', 'progress', 'filename', 'error', 'isFetchingMetadata'
+            'status', 'progress', 'filename', 'error', 'retryCount', 'maxRetries', 'downloadSpeed', 'eta', 'isFetchingMetadata', 'requiresAuth'
         ];
 
         Object.keys(properties).forEach(key => {
@@ -73,7 +78,12 @@ class Video {
 
     // Check if video is currently processing
     isProcessing() {
-        return ['downloading', 'converting'].includes(this.status);
+        return ['downloading', 'converting', 'paused'].includes(this.status);
+    }
+
+    // Check if video is paused
+    isPaused() {
+        return this.status === 'paused';
     }
 
     // Check if video is completed
@@ -218,6 +228,7 @@ class Video {
             filename: this.filename,
             error: this.error,
             isFetchingMetadata: this.isFetchingMetadata,
+            requiresAuth: this.requiresAuth,
             estimatedSize: this.estimatedSize,
             downloadSpeed: this.downloadSpeed,
             createdAt: this.createdAt.toISOString(),
@@ -237,7 +248,8 @@ class Video {
             progress: data.progress,
             filename: data.filename,
             error: data.error,
-            isFetchingMetadata: data.isFetchingMetadata || false
+            isFetchingMetadata: data.isFetchingMetadata || false,
+            requiresAuth: data.requiresAuth || false
         });
 
         video.id = data.id;
@@ -276,10 +288,20 @@ class Video {
                     })
                     .catch(metadataError => {
                         console.warn('Failed to fetch metadata for video:', metadataError.message);
+
+                        // Check if error indicates authentication is required
+                        const errorMsg = metadataError.message.toLowerCase();
+                        const requiresAuth = errorMsg.includes('sign in') ||
+                                            errorMsg.includes('age') ||
+                                            errorMsg.includes('restricted') ||
+                                            errorMsg.includes('private') ||
+                                            errorMsg.includes('members');
+
                         const oldProperties = { ...video };
                         video.update({
                             title: video.url,
-                            isFetchingMetadata: false
+                            isFetchingMetadata: false,
+                            requiresAuth: requiresAuth
                         });
 
                         // Notify AppState even on error so UI updates
