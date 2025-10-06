@@ -571,18 +571,18 @@ class GrabZillaApp {
         }
 
         this.state.updateUI({ isDownloading: true });
-        this.updateStatusMessage(`Starting download of ${videos.length} video(s)...`);
+        this.updateStatusMessage(`Starting parallel download of ${videos.length} video(s)...`);
 
         // Set up download progress listener
         window.IPCManager.onDownloadProgress('app', (progressData) => {
             this.handleDownloadProgress(progressData);
         });
 
-        // Download videos sequentially
-        let successCount = 0;
-        let failedCount = 0;
+        // PARALLEL DOWNLOADS: Start all downloads simultaneously
+        // The DownloadManager will handle concurrency limits automatically
+        console.log(`Starting ${videos.length} downloads in parallel...`);
 
-        for (const video of videos) {
+        const downloadPromises = videos.map(async (video) => {
             try {
                 // Update video status to downloading
                 this.state.updateVideo(video.id, { status: 'downloading', progress: 0 });
@@ -602,19 +602,19 @@ class GrabZillaApp {
                         progress: 100,
                         filename: result.filename
                     });
-                    successCount++;
 
                     // Show notification for successful download
                     this.showDownloadNotification(video, 'success');
+                    return { success: true, video };
                 } else {
                     this.state.updateVideo(video.id, {
                         status: 'error',
                         error: result.error || 'Download failed'
                     });
-                    failedCount++;
 
                     // Show notification for failed download
                     this.showDownloadNotification(video, 'error', result.error);
+                    return { success: false, video, error: result.error };
                 }
 
             } catch (error) {
@@ -623,9 +623,16 @@ class GrabZillaApp {
                     status: 'error',
                     error: error.message
                 });
-                failedCount++;
+                return { success: false, video, error: error.message };
             }
-        }
+        });
+
+        // Wait for all downloads to complete
+        const results = await Promise.all(downloadPromises);
+
+        // Count successes and failures
+        const successCount = results.filter(r => r.success).length;
+        const failedCount = results.filter(r => !r.success).length;
 
         // Clean up progress listener
         window.IPCManager.removeDownloadProgressListener('app');
