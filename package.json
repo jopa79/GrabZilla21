@@ -29,9 +29,9 @@
     "node-notifier": "^10.0.1"
   },
   "devDependencies": {
-    "electron": "33.0.0",
     "@playwright/test": "^1.40.0",
     "@vitest/ui": "^3.2.4",
+    "electron": "^38.2.1",
     "electron-builder": "^24.0.0",
     "jsdom": "^23.0.0",
     "vitest": "^3.2.4"

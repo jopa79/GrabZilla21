@@ -5,6 +5,7 @@ const { spawn } = require('child_process')
 const notifier = require('node-notifier')
 const ffmpegConverter = require('../scripts/utils/ffmpeg-converter')
 const DownloadManager = require('./download-manager')
+const { sanitizePath, validateCookieFile, sanitizeFilename, isValidVideoUrl } = require('./security-utils')
 
 // Keep a global reference of the window object
 let mainWindow
@@ -149,21 +150,12 @@ ipcMain.handle('select-cookie-file', async () => {
     
     if (!result.canceled && result.filePaths.length > 0) {
       const selectedPath = result.filePaths[0]
-      
-      // Verify file exists and is readable
+
+      // Validate cookie file with comprehensive security checks
       try {
-        await fs.promises.access(selectedPath, fs.constants.R_OK)
-        const stats = await fs.promises.stat(selectedPath)
-        
-        if (stats.size === 0) {
-          return { 
-            success: false, 
-            error: 'Selected cookie file is empty. Please choose a valid cookie file.' 
-          }
-        }
-        
-        console.log('Selected cookie file:', selectedPath)
-        return { success: true, path: selectedPath }
+        const validatedPath = validateCookieFile(selectedPath)
+        console.log('Cookie file validated:', validatedPath)
+        return { success: true, path: validatedPath }
       } catch (error) {
         console.error('Cookie file not accessible:', error)
         return { 
@@ -797,19 +789,34 @@ ipcMain.handle('download-video', async (event, { videoId, url, quality, format, 
 async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, requiresConversion, onProcess, onProgress }) {
   const ytDlpPath = getBinaryPath('yt-dlp')
 
+  // Sanitize and validate paths
+  let sanitizedSavePath
+  try {
+    sanitizedSavePath = sanitizePath(savePath)
+  } catch (error) {
+    throw new Error(`Invalid save path: ${error.message}`)
+  }
+
   // Build yt-dlp arguments
   const args = [
     '--newline', // Force progress on new lines for better parsing
     '--no-warnings', // Reduce noise in output
     '--continue', // Resume interrupted downloads
     '-f', getQualityFormat(quality),
-    '-o', path.join(savePath, '%(title)s.%(ext)s'),
+    '-o', path.join(sanitizedSavePath, '%(title)s.%(ext)s'),
     url
   ]
 
-  // Add cookie file if provided
-  if (cookieFile && fs.existsSync(cookieFile)) {
-    args.unshift('--cookies', cookieFile)
+  // Add cookie file if provided (with validation)
+  if (cookieFile) {
+    try {
+      const validatedCookieFile = validateCookieFile(cookieFile)
+      args.unshift('--cookies', validatedCookieFile)
+      console.log('✓ Using validated cookie file for download:', validatedCookieFile)
+    } catch (error) {
+      console.warn('✗ Cookie file validation failed:', error.message)
+      console.log('✗ Proceeding without cookie file (may fail for age-restricted videos)')
+    }
   }
 
   return new Promise((resolve, reject) => {
@@ -1105,11 +1112,15 @@ ipcMain.handle('get-video-metadata', async (event, url, cookieFile = null) => {
     ]
 
     // Add cookie file if provided (for age-restricted/private videos)
-    if (cookieFile && fs.existsSync(cookieFile)) {
-      args.unshift('--cookies', cookieFile)
-      console.log('✓ Using cookie file for metadata extraction:', cookieFile)
-    } else if (cookieFile) {
-      console.warn('✗ Cookie file specified but does not exist:', cookieFile)
+    if (cookieFile) {
+      try {
+        const validatedCookieFile = validateCookieFile(cookieFile)
+        args.unshift('--cookies', validatedCookieFile)
+        console.log('✓ Using validated cookie file for metadata extraction:', validatedCookieFile)
+      } catch (error) {
+        console.warn('✗ Cookie file validation failed:', error.message)
+        console.log('✗ Proceeding without cookie file')
+      }
     } else {
       console.log('✗ No cookie file provided for metadata extraction')
     }
@@ -1202,8 +1213,13 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls, cookieFile = null
         ]
 
         // Add cookie file if provided (for age-restricted/private videos)
-        if (cookieFile && fs.existsSync(cookieFile)) {
-          args.unshift('--cookies', cookieFile)
+        if (cookieFile) {
+          try {
+            const validatedCookieFile = validateCookieFile(cookieFile)
+            args.unshift('--cookies', validatedCookieFile)
+          } catch (error) {
+            console.warn('✗ Cookie file validation failed for batch:', error.message)
+          }
         }
 
         try {
