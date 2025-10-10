@@ -39,7 +39,7 @@ class EventBus {
         listeners.sort((a, b) => b.priority - a.priority);
 
         if (this.debugMode) {
-            console.log(`[EventBus] Subscribed to '${event}' (ID: ${listener.id})`);
+            logger.debug(`[EventBus] Subscribed to '${event}' (ID: ${listener.id})`);
         }
 
         return listener.id;
@@ -81,7 +81,7 @@ class EventBus {
         }
 
         if (this.debugMode && removed) {
-            console.log(`[EventBus] Unsubscribed from '${event}'`);
+            logger.debug(`[EventBus] Unsubscribed from '${event}'`);
         }
 
         return removed;
@@ -93,7 +93,7 @@ class EventBus {
             const removed = this.listeners.has(event);
             this.listeners.delete(event);
             if (this.debugMode && removed) {
-                console.log(`[EventBus] Removed all listeners for '${event}'`);
+                logger.debug(`[EventBus] Removed all listeners for '${event}'`);
             }
             return removed;
         } else {
@@ -101,7 +101,7 @@ class EventBus {
             const count = this.listeners.size;
             this.listeners.clear();
             if (this.debugMode && count > 0) {
-                console.log(`[EventBus] Removed all listeners (${count} events)`);
+                logger.debug(`[EventBus] Removed all listeners (${count} events)`);
             }
             return count > 0;
         }
@@ -120,12 +120,12 @@ class EventBus {
         this.addToHistory(eventData);
 
         if (this.debugMode) {
-            console.log(`[EventBus] Emitting '${event}'`, data);
+            logger.debug(`[EventBus] Emitting '${event}'`, data);
         }
 
         if (!this.listeners.has(event)) {
             if (this.debugMode) {
-                console.log(`[EventBus] No listeners for '${event}'`);
+                logger.debug(`[EventBus] No listeners for '${event}'`);
             }
             return 0;
         }
@@ -151,7 +151,7 @@ class EventBus {
                 }
 
             } catch (error) {
-                console.error(`[EventBus] Error in listener for '${event}':`, error);
+                logger.error(`[EventBus] Error in listener for '${event}':`, error.message);
 
                 // Optionally emit an error event
                 if (event !== 'error') {
@@ -186,7 +186,7 @@ class EventBus {
         this.addToHistory(eventData);
 
         if (this.debugMode) {
-            console.log(`[EventBus] Emitting async '${event}'`, data);
+            logger.debug(`[EventBus] Emitting async '${event}'`, data);
         }
 
         if (!this.listeners.has(event)) {
@@ -220,7 +220,7 @@ class EventBus {
                     }
 
                 } catch (error) {
-                    console.error(`[EventBus] Error in async listener for '${event}':`, error);
+                    logger.error(`[EventBus] Error in async listener for '${event}':`, error.message);
 
                     if (event !== 'error') {
                         setTimeout(() => {

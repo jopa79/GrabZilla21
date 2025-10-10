@@ -4,6 +4,8 @@
  * @version 2.1.0
  */
 
+import * as logger from '../utils/logger.js';
+
 /**
  * METADATA SERVICE
  *
@@ -75,7 +77,7 @@ class MetadataService {
      */
     async fetchMetadata(url, retryCount = 0) {
         if (!this.ipcAvailable) {
-            console.warn('IPC not available, returning fallback metadata');
+            logger.warn('IPC not available, returning fallback metadata');
             return this.getFallbackMetadata(url);
         }
 
@@ -98,11 +100,11 @@ class MetadataService {
             return this.normalizeMetadata(metadata, url);
 
         } catch (error) {
-            console.error(`Error fetching metadata for ${url} (attempt ${retryCount + 1}/${this.maxRetries + 1}):`, error);
+            logger.error(`Error fetching metadata for ${url} (attempt ${retryCount + 1}/${this.maxRetries + 1}):`, error.message);
 
             // Retry if we haven't exceeded max retries
             if (retryCount < this.maxRetries) {
-                console.log(`Retrying metadata fetch for ${url} in ${this.retryDelay}ms...`);
+                logger.debug(`Retrying metadata fetch for ${url} in ${this.retryDelay}ms...`);
 
                 // Wait before retrying
                 await new Promise(resolve => setTimeout(resolve, this.retryDelay));
@@ -112,7 +114,7 @@ class MetadataService {
             }
 
             // Return fallback metadata after all retries exhausted
-            console.warn(`All retry attempts exhausted for ${url}, using fallback`);
+            logger.warn(`All retry attempts exhausted for ${url}, using fallback`);
             return this.getFallbackMetadata(url);
         }
     }
@@ -266,7 +268,7 @@ class MetadataService {
         // Fallback to individual requests for single URL or if batch API not available
         const promises = urls.map(url =>
             this.getVideoMetadata(url).catch(error => {
-                console.warn(`Failed to prefetch metadata for ${url}:`, error);
+                logger.warn(`Failed to prefetch metadata for ${url}:`, error);
                 return this.getFallbackMetadata(url);
             })
         );
@@ -285,12 +287,12 @@ class MetadataService {
         }
 
         if (!this.ipcAvailable || !window.IPCManager.getBatchVideoMetadata) {
-            console.warn('Batch metadata API not available, falling back to individual requests');
+            logger.warn('Batch metadata API not available, falling back to individual requests');
             return this.prefetchMetadata(urls);
         }
 
         try {
-            console.log(`Fetching batch metadata for ${urls.length} URLs...`);
+            logger.debug(`Fetching batch metadata for ${urls.length} URLs...`);
             const startTime = Date.now();
 
             // Normalize URLs
@@ -312,7 +314,7 @@ class MetadataService {
             // If all URLs are cached, return immediately
             if (uncachedUrls.length === 0) {
                 const duration = Date.now() - startTime;
-                console.log(`All ${urls.length} URLs found in cache (${duration}ms)`);
+                logger.debug(`All ${urls.length} URLs found in cache (${duration}ms)`);
                 return cachedResults;
             }
 
@@ -339,23 +341,23 @@ class MetadataService {
                 if (fresh) return fresh;
 
                 // Fallback if not found
-                console.warn(`No metadata found for ${url}, using fallback`);
+                logger.warn(`No metadata found for ${url}, using fallback`);
                 return { ...this.getFallbackMetadata(url), url };
             });
 
             const duration = Date.now() - startTime;
             const avgTime = duration / urls.length;
-            console.log(`Batch metadata complete: ${urls.length} URLs in ${duration}ms (${avgTime.toFixed(1)}ms avg/video, ${cachedResults.length} cached)`);
+            logger.debug(`Batch metadata complete: ${urls.length} URLs in ${duration}ms (${avgTime.toFixed(1)}ms avg/video, ${cachedResults.length} cached)`);
 
             return allResults;
 
         } catch (error) {
-            console.error('Batch metadata extraction failed, falling back to individual requests:', error);
+            logger.error('Batch metadata extraction failed, falling back to individual requests:', error.message);
 
             // Fallback to individual requests on error
             const promises = urls.map(url =>
                 this.getVideoMetadata(url).catch(err => {
-                    console.warn(`Failed to fetch metadata for ${url}:`, err);
+                    logger.warn(`Failed to fetch metadata for ${url}:`, err);
                     return { ...this.getFallbackMetadata(url), url };
                 })
             );

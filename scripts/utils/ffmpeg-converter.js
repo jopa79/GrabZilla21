@@ -50,9 +50,9 @@ class FFmpegConverter {
     async initGPU() {
         try {
             this.gpuCapabilities = await gpuDetector.detect();
-            console.log('✅ FFmpegConverter GPU initialized:', this.gpuCapabilities.type || 'Software only');
+            logger.debug('✅ FFmpegConverter GPU initialized:', this.gpuCapabilities.type || 'Software only');
         } catch (error) {
-            console.warn('⚠️  GPU initialization failed:', error.message);
+            logger.warn('⚠️  GPU initialization failed:', error.message);
         }
     }
 
@@ -230,7 +230,7 @@ class FFmpegConverter {
                 throw new Error(`Unsupported GPU type: ${gpu.type}`);
         }
 
-        console.log(`🎮 Using ${gpu.type} GPU acceleration for encoding`);
+        logger.debug(`🎮 Using ${gpu.type} GPU acceleration for encoding`);
         return args;
     }
 
@@ -534,7 +534,7 @@ class FFmpegConverter {
             ffmpegProcess.on('close', (code) => {
                 this.activeConversions.delete(conversionId);
 
-                console.log(`FFmpeg conversion ${conversionId} completed with code ${code}`);
+                logger.debug(`FFmpeg conversion ${conversionId} completed with code ${code}`);
 
                 if (code === 0) {
                     // Verify output file was created
@@ -580,7 +580,7 @@ class FFmpegConverter {
             // Handle process errors
             ffmpegProcess.on('error', (error) => {
                 this.activeConversions.delete(conversionId);
-                console.error(`FFmpeg process ${conversionId} error:`, error);
+                logger.error(`FFmpeg process ${conversionId} error:`, error.message);
                 reject(new Error(`Failed to start conversion process: ${error.message}`));
             });
         });
@@ -596,7 +596,7 @@ class FFmpegConverter {
         if (process) {
             process.kill('SIGTERM');
             this.activeConversions.delete(conversionId);
-            console.log(`Cancelled FFmpeg conversion ${conversionId}`);
+            logger.debug(`Cancelled FFmpeg conversion ${conversionId}`);
             return true;
         }
         return false;
@@ -613,7 +613,7 @@ class FFmpegConverter {
             cancelledCount++;
         }
         this.activeConversions.clear();
-        console.log(`Cancelled ${cancelledCount} active conversions`);
+        logger.debug(`Cancelled ${cancelledCount} active conversions`);
         return cancelledCount;
     }
 
@@ -640,7 +640,7 @@ class FFmpegConverter {
 
         const ffprobePath = this.getBinaryPath().replace('ffmpeg', 'ffprobe');
         if (!fs.existsSync(ffprobePath)) {
-            console.warn('FFprobe not available, duration detection disabled');
+            logger.warn('FFprobe not available, duration detection disabled');
             return null;
         }
 
@@ -672,13 +672,13 @@ class FFmpegConverter {
                     const duration = parseFloat(output.trim());
                     resolve(isNaN(duration) ? null : duration);
                 } else {
-                    console.warn('Failed to get video duration:', errorOutput);
+                    logger.warn('Failed to get video duration:', errorOutput);
                     resolve(null); // Don't reject, just return null
                 }
             });
 
             ffprobeProcess.on('error', (error) => {
-                console.warn('FFprobe process error:', error);
+                logger.warn('FFprobe process error:', error);
                 resolve(null); // Don't reject, just return null
             });
         });

@@ -45,6 +45,14 @@ describe('Error Handling System', () => {
     // Mock APIs
     window.electronAPI = mockElectronAPI
 
+    // Mock logger for error-handler.js
+    window.logger = {
+      error: vi.fn(),
+      warn: vi.fn(),
+      info: vi.fn(),
+      debug: vi.fn()
+    }
+
     // Load the error handler
     const fs = require('fs')
     const path = require('path')
@@ -52,7 +60,7 @@ describe('Error Handling System', () => {
       path.join(__dirname, '../scripts/utils/error-handler.js'),
       'utf8'
     )
-    
+
     // Execute the script in the window context
     const script = new window.Function(errorHandlerScript)
     script.call(window)

@@ -6,6 +6,7 @@ const notifier = require('node-notifier')
 const ffmpegConverter = require('../scripts/utils/ffmpeg-converter')
 const DownloadManager = require('./download-manager')
 const { sanitizePath, validateCookieFile, sanitizeFilename, isValidVideoUrl } = require('./security-utils')
+const logger = require('./logger')
 
 // Keep a global reference of the window object
 let mainWindow
@@ -87,23 +88,23 @@ ipcMain.handle('select-save-directory', async () => {
       // Verify directory is writable
       try {
         await fs.promises.access(selectedPath, fs.constants.W_OK)
-        console.log('Selected save directory:', selectedPath)
+        logger.info('Save directory selected')
         return { success: true, path: selectedPath }
       } catch (error) {
-        console.error('Directory not writable:', error)
-        return { 
-          success: false, 
-          error: 'Selected directory is not writable. Please choose a different location.' 
+        logger.error('Directory not writable:', error.message)
+        return {
+          success: false,
+          error: 'Selected directory is not writable. Please choose a different location.'
         }
       }
     }
     
     return { success: false, error: 'No directory selected' }
   } catch (error) {
-    console.error('Error selecting save directory:', error)
-    return { 
-      success: false, 
-      error: `Failed to open directory selector: ${error.message}` 
+    logger.error('Error selecting save directory:', error.message)
+    return {
+      success: false,
+      error: `Failed to open directory selector: ${error.message}`
     }
   }
 })
@@ -123,10 +124,10 @@ ipcMain.handle('create-directory', async (event, dirPath) => {
     // Create directory recursively
     await fs.promises.mkdir(expandedPath, { recursive: true })
 
-    console.log('Directory created successfully:', expandedPath)
+    logger.info('Directory created successfully')
     return { success: true, path: expandedPath }
   } catch (error) {
-    console.error('Error creating directory:', error)
+    logger.error('Error creating directory:', error.message)
     return {
       success: false,
       error: `Failed to create directory: ${error.message}`
@@ -154,23 +155,23 @@ ipcMain.handle('select-cookie-file', async () => {
       // Validate cookie file with comprehensive security checks
       try {
         const validatedPath = validateCookieFile(selectedPath)
-        console.log('Cookie file validated:', validatedPath)
+        logger.info('Cookie file validated')
         return { success: true, path: validatedPath }
       } catch (error) {
-        console.error('Cookie file not accessible:', error)
-        return { 
-          success: false, 
-          error: 'Selected cookie file is not readable. Please check file permissions.' 
+        logger.error('Cookie file not accessible:', error.message)
+        return {
+          success: false,
+          error: 'Selected cookie file is not readable. Please check file permissions.'
         }
       }
     }
     
     return { success: false, error: 'No cookie file selected' }
   } catch (error) {
-    console.error('Error selecting cookie file:', error)
-    return { 
-      success: false, 
-      error: `Failed to open file selector: ${error.message}` 
+    logger.error('Error selecting cookie file:', error.message)
+    return {
+      success: false,
+      error: `Failed to open file selector: ${error.message}`
     }
   }
 })
@@ -194,11 +195,11 @@ ipcMain.handle('open-downloads-folder', async (event, folderPath) => {
     // shell.openPath() is cross-platform (macOS Finder, Windows Explorer, Linux file manager)
     await shell.openPath(folderPath)
 
-    console.log('Opened folder:', folderPath)
+    logger.info('Opened downloads folder')
     return { success: true }
 
   } catch (error) {
-    console.error('Error opening folder:', error)
+    logger.error('Error opening folder:', error.message)
     return {
       success: false,
       error: `Failed to open folder: ${error.message}`
@@ -217,7 +218,7 @@ ipcMain.handle('check-file-exists', async (event, filePath) => {
     return { exists }
 
   } catch (error) {
-    console.error('Error checking file existence:', error)
+    logger.error('Error checking file existence:', error.message)
     return { exists: false }
   }
 })
@@ -252,7 +253,7 @@ ipcMain.handle('start-clipboard-monitor', async (event) => {
 
     return { success: true }
   } catch (error) {
-    console.error('Error starting clipboard monitor:', error)
+    logger.error('Error starting clipboard monitor:', error.message)
     return { success: false, error: error.message }
   }
 })
@@ -265,7 +266,7 @@ ipcMain.handle('stop-clipboard-monitor', async (event) => {
     }
     return { success: true }
   } catch (error) {
-    console.error('Error stopping clipboard monitor:', error)
+    logger.error('Error stopping clipboard monitor:', error.message)
     return { success: false, error: error.message }
   }
 })
@@ -303,7 +304,7 @@ ipcMain.handle('export-video-list', async (event, videos) => {
     fs.writeFileSync(filePath, JSON.stringify(exportData, null, 2), 'utf-8')
     return { success: true, filePath }
   } catch (error) {
-    console.error('Error exporting video list:', error)
+    logger.error('Error exporting video list:', error.message)
     return { success: false, error: error.message }
   }
 })
@@ -340,7 +341,7 @@ ipcMain.handle('import-video-list', async (event) => {
 
     return { success: true, videos: importData.videos }
   } catch (error) {
-    console.error('Error importing video list:', error)
+    logger.error('Error importing video list:', error.message)
     return { success: false, error: error.message }
   }
 })
@@ -378,7 +379,7 @@ ipcMain.handle('show-notification', async (event, options) => {
       return new Promise((resolve) => {
         notifier.notify(notificationOptions, (err, response) => {
           if (err) {
-            console.error('Notification error:', err)
+            logger.error('Notification error:', err)
             resolve({ success: false, error: err.message })
           } else {
             resolve({ success: true, method: 'node-notifier', response })
@@ -387,7 +388,7 @@ ipcMain.handle('show-notification', async (event, options) => {
       })
     }
   } catch (error) {
-    console.error('Failed to show notification:', error)
+    logger.error('Failed to show notification:', error.message)
     return { success: false, error: error.message }
   }
 })
@@ -408,7 +409,7 @@ ipcMain.handle('show-error-dialog', async (event, options) => {
     const result = await dialog.showMessageBox(mainWindow, dialogOptions)
     return { success: true, response: result.response, checkboxChecked: result.checkboxChecked }
   } catch (error) {
-    console.error('Failed to show error dialog:', error)
+    logger.error('Failed to show error dialog:', error.message)
     return { success: false, error: error.message }
   }
 })
@@ -428,7 +429,7 @@ ipcMain.handle('show-info-dialog', async (event, options) => {
     const result = await dialog.showMessageBox(mainWindow, dialogOptions)
     return { success: true, response: result.response }
   } catch (error) {
-    console.error('Failed to show info dialog:', error)
+    logger.error('Failed to show info dialog:', error.message)
     return { success: false, error: error.message }
   }
 })
@@ -447,7 +448,7 @@ ipcMain.handle('check-binary-dependencies', async () => {
     // Ensure binaries directory exists
     if (!fs.existsSync(binariesPath)) {
       const error = `Binaries directory not found: ${binariesPath}`
-      console.error(error)
+      logger.error(error)
       results.ytDlp.error = error
       results.ffmpeg.error = error
       return results
@@ -462,14 +463,14 @@ ipcMain.handle('check-binary-dependencies', async () => {
         // Test if binary is executable
         await fs.promises.access(ytDlpPath, fs.constants.X_OK)
         results.ytDlp.available = true
-        console.log('yt-dlp binary found and executable:', ytDlpPath)
+        logger.debug('yt-dlp binary found and executable:', ytDlpPath)
       } catch (error) {
         results.ytDlp.error = 'yt-dlp binary exists but is not executable'
-        console.error(results.ytDlp.error, error)
+        logger.error(results.ytDlp.error, error.message)
       }
     } else {
       results.ytDlp.error = 'yt-dlp binary not found'
-      console.error(results.ytDlp.error, ytDlpPath)
+      logger.error(results.ytDlp.error, ytDlpPath)
     }
 
     // Check ffmpeg
@@ -481,21 +482,21 @@ ipcMain.handle('check-binary-dependencies', async () => {
         // Test if binary is executable
         await fs.promises.access(ffmpegPath, fs.constants.X_OK)
         results.ffmpeg.available = true
-        console.log('ffmpeg binary found and executable:', ffmpegPath)
+        logger.debug('ffmpeg binary found and executable:', ffmpegPath)
       } catch (error) {
         results.ffmpeg.error = 'ffmpeg binary exists but is not executable'
-        console.error(results.ffmpeg.error, error)
+        logger.error(results.ffmpeg.error, error.message)
       }
     } else {
       results.ffmpeg.error = 'ffmpeg binary not found'
-      console.error(results.ffmpeg.error, ffmpegPath)
+      logger.error(results.ffmpeg.error, ffmpegPath)
     }
 
     results.allAvailable = results.ytDlp.available && results.ffmpeg.available
 
     return results
   } catch (error) {
-    console.error('Error checking binary dependencies:', error)
+    logger.error('Error checking binary dependencies:', error.message)
     results.ytDlp.error = error.message
     results.ffmpeg.error = error.message
     return results
@@ -553,7 +554,7 @@ async function getCachedVersion(key, fetchFn) {
     versionCache[key] = { latestVersion: version, timestamp: now }
     return version
   } catch (error) {
-    console.warn(`Failed to fetch latest ${key} version:`, error.message)
+    logger.warn(`Failed to fetch latest ${key} version:`, error.message)
     // Return cached even if expired on error
     return cached.latestVersion
   }
@@ -594,27 +595,27 @@ async function checkLatestYtDlpVersion() {
             resolve(json.tag_name || null)
           } else if (res.statusCode === 403) {
             // Rate limited - return null gracefully
-            console.warn('GitHub API rate limit exceeded, skipping version check')
+            logger.warn('GitHub API rate limit exceeded, skipping version check')
             resolve(null)
           } else {
-            console.warn(`GitHub API returned ${res.statusCode}, skipping version check`)
+            logger.warn(`GitHub API returned ${res.statusCode}, skipping version check`)
             resolve(null)
           }
         } catch (error) {
-          console.warn('Error parsing GitHub API response:', error.message)
+          logger.warn('Error parsing GitHub API response:', error.message)
           resolve(null)
         }
       })
     })
 
     req.on('error', (error) => {
-      console.warn('GitHub API request error:', error.message)
+      logger.warn('GitHub API request error:', error.message)
       resolve(null)
     })
 
     req.on('timeout', () => {
       req.destroy()
-      console.warn('GitHub API request timeout')
+      logger.warn('GitHub API request timeout')
       resolve(null)
     })
 
@@ -631,7 +632,7 @@ ipcMain.handle('check-binary-versions', async () => {
   try {
     // Ensure binaries directory exists
     if (!fs.existsSync(binariesPath)) {
-      console.warn('Binaries directory not found:', binariesPath)
+      logger.warn('Binaries directory not found:', binariesPath)
       hasMissingBinaries = true
       return { ytDlp: { available: false }, ffmpeg: { available: false } }
     }
@@ -655,7 +656,7 @@ ipcMain.handle('check-binary-versions', async () => {
           results.ytDlp.updateAvailable = compareVersions(latestVersion, results.ytDlp.version) > 0
         }
       } catch (updateError) {
-        console.warn('Could not check for yt-dlp updates:', updateError.message)
+        logger.warn('Could not check for yt-dlp updates:', updateError.message)
         // Continue without update info
       }
     } else {
@@ -687,7 +688,7 @@ ipcMain.handle('check-binary-versions', async () => {
       if (!results.ytDlp || !results.ytDlp.available) missingList.push('yt-dlp');
       if (!results.ffmpeg || !results.ffmpeg.available) missingList.push('ffmpeg');
 
-      console.error(`❌ Missing binaries detected: ${missingList.join(', ')}`);
+      logger.error(`❌ Missing binaries detected: ${missingList.join(', ')}`);
 
       // Send notification via IPC to show dialog
       mainWindow.webContents.send('binaries-missing', {
@@ -696,7 +697,7 @@ ipcMain.handle('check-binary-versions', async () => {
       });
     }
   } catch (error) {
-    console.error('Error checking binary versions:', error)
+    logger.error('Error checking binary versions:', error.message)
     // Return safe defaults on error
     results.ytDlp = results.ytDlp || { available: false }
     results.ffmpeg = results.ffmpeg || { available: false }
@@ -713,7 +714,7 @@ ipcMain.handle('download-video', async (event, { videoId, url, quality, format, 
   // Validate binaries exist before attempting download
   if (!fs.existsSync(ytDlpPath)) {
     const error = 'yt-dlp binary not found. Please run "npm run setup" to download required binaries.'
-    console.error('❌', error)
+    logger.error('❌', error.message)
     throw new Error(error)
   }
 
@@ -721,7 +722,7 @@ ipcMain.handle('download-video', async (event, { videoId, url, quality, format, 
   const requiresConversion = format && format !== 'None'
   if (requiresConversion && !fs.existsSync(ffmpegPath)) {
     const error = 'ffmpeg binary not found. Required for format conversion. Please run "npm run setup".'
-    console.error('❌', error)
+    logger.error('❌', error.message)
     throw new Error(error)
   }
 
@@ -733,7 +734,7 @@ ipcMain.handle('download-video', async (event, { videoId, url, quality, format, 
   // Check if format conversion is required (we already validated ffmpeg exists above if needed)
   const requiresConversionCheck = format && format !== 'None' && ffmpegConverter.isAvailable()
 
-  console.log('Adding download to queue:', {
+  logger.debug('Adding download to queue:', {
     videoId, url, quality, format, savePath, requiresConversion: requiresConversionCheck
   })
 
@@ -766,7 +767,7 @@ ipcMain.handle('download-video', async (event, { videoId, url, quality, format, 
 
       return downloadResult
     } catch (error) {
-      console.error('Download/conversion process failed:', error)
+      logger.error('Download/conversion process failed:', error.message)
       throw error
     }
   }
@@ -812,15 +813,15 @@ async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, re
     try {
       const validatedCookieFile = validateCookieFile(cookieFile)
       args.unshift('--cookies', validatedCookieFile)
-      console.log('✓ Using validated cookie file for download:', validatedCookieFile)
+      logger.debug('✓ Using validated cookie file for download:', validatedCookieFile)
     } catch (error) {
-      console.warn('✗ Cookie file validation failed:', error.message)
-      console.log('✗ Proceeding without cookie file (may fail for age-restricted videos)')
+      logger.warn('✗ Cookie file validation failed:', error.message)
+      logger.debug('✗ Proceeding without cookie file (may fail for age-restricted videos)')
     }
   }
 
   return new Promise((resolve, reject) => {
-    console.log('Starting yt-dlp download:', { url, quality, savePath })
+    logger.debug('Starting yt-dlp download:', { url, quality, savePath })
 
     const downloadProcess = spawn(ytDlpPath, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -908,12 +909,12 @@ async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, re
       
       // Some yt-dlp messages come through stderr but aren't errors
       if (chunk.includes('WARNING') || chunk.includes('ERROR')) {
-        console.warn('yt-dlp warning/error:', chunk.trim())
+        logger.warn('yt-dlp warning/error:', chunk.trim())
       }
     })
     
     downloadProcess.on('close', (code) => {
-      console.log(`yt-dlp process exited with code ${code}`)
+      logger.debug(`yt-dlp process exited with code ${code}`)
       
       if (code === 0) {
         // Send progress update - either final or intermediate if conversion required
@@ -962,7 +963,7 @@ async function downloadWithYtDlp(event, { url, quality, savePath, cookieFile, re
     })
     
     downloadProcess.on('error', (error) => {
-      console.error('Failed to start yt-dlp process:', error)
+      logger.error('Failed to start yt-dlp process:', error.message)
       reject(new Error(`Failed to start download process: ${error.message}`))
     })
   })
@@ -988,7 +989,7 @@ ipcMain.handle('cancel-conversion', async (event, conversionId) => {
     const cancelled = ffmpegConverter.cancelConversion(conversionId)
     return { success: cancelled, message: cancelled ? 'Conversion cancelled' : 'Conversion not found' }
   } catch (error) {
-    console.error('Error cancelling conversion:', error)
+    logger.error('Error cancelling conversion:', error.message)
     throw new Error(`Failed to cancel conversion: ${error.message}`)
   }
 })
@@ -1002,7 +1003,7 @@ ipcMain.handle('cancel-all-conversions', async (event) => {
       message: `Cancelled ${cancelledCount} active conversions` 
     }
   } catch (error) {
-    console.error('Error cancelling all conversions:', error)
+    logger.error('Error cancelling all conversions:', error.message)
     throw new Error(`Failed to cancel conversions: ${error.message}`)
   }
 })
@@ -1012,7 +1013,7 @@ ipcMain.handle('get-active-conversions', async (event) => {
     const activeConversions = ffmpegConverter.getActiveConversions()
     return { success: true, conversions: activeConversions }
   } catch (error) {
-    console.error('Error getting active conversions:', error)
+    logger.error('Error getting active conversions:', error.message)
     throw new Error(`Failed to get active conversions: ${error.message}`)
   }
 })
@@ -1023,7 +1024,7 @@ ipcMain.handle('get-download-stats', async (event) => {
     const stats = downloadManager.getStats()
     return { success: true, stats }
   } catch (error) {
-    console.error('Error getting download stats:', error)
+    logger.error('Error getting download stats:', error.message)
     throw new Error(`Failed to get download stats: ${error.message}`)
   }
 })
@@ -1036,7 +1037,7 @@ ipcMain.handle('cancel-download', async (event, videoId) => {
       message: cancelled ? 'Download cancelled' : 'Download not found in queue'
     }
   } catch (error) {
-    console.error('Error cancelling download:', error)
+    logger.error('Error cancelling download:', error.message)
     throw new Error(`Failed to cancel download: ${error.message}`)
   }
 })
@@ -1051,7 +1052,7 @@ ipcMain.handle('cancel-all-downloads', async (event) => {
       message: `Cancelled ${result.cancelled} queued downloads. ${result.active} downloads still active.`
     }
   } catch (error) {
-    console.error('Error cancelling all downloads:', error)
+    logger.error('Error cancelling all downloads:', error.message)
     throw new Error(`Failed to cancel downloads: ${error.message}`)
   }
 })
@@ -1064,7 +1065,7 @@ ipcMain.handle('pause-download', async (event, videoId) => {
       message: paused ? 'Download paused' : 'Download not found or cannot be paused'
     }
   } catch (error) {
-    console.error('Error pausing download:', error)
+    logger.error('Error pausing download:', error.message)
     throw new Error(`Failed to pause download: ${error.message}`)
   }
 })
@@ -1077,7 +1078,7 @@ ipcMain.handle('resume-download', async (event, videoId) => {
       message: resumed ? 'Download resumed' : 'Download not found or cannot be resumed'
     }
   } catch (error) {
-    console.error('Error resuming download:', error)
+    logger.error('Error resuming download:', error.message)
     throw new Error(`Failed to resume download: ${error.message}`)
   }
 })
@@ -1096,8 +1097,8 @@ ipcMain.handle('get-video-metadata', async (event, url, cookieFile = null) => {
   }
 
   try {
-    console.log('Fetching metadata for:', url)
-    console.log('Cookie file parameter received:', cookieFile)
+    logger.debug('Fetching metadata for:', url)
+    logger.debug('Cookie file parameter received:', cookieFile)
     const startTime = Date.now()
 
     // OPTIMIZED: Extract only the 3 fields we actually display (5-10x faster)
@@ -1116,13 +1117,13 @@ ipcMain.handle('get-video-metadata', async (event, url, cookieFile = null) => {
       try {
         const validatedCookieFile = validateCookieFile(cookieFile)
         args.unshift('--cookies', validatedCookieFile)
-        console.log('✓ Using validated cookie file for metadata extraction:', validatedCookieFile)
+        logger.debug('✓ Using validated cookie file for metadata extraction:', validatedCookieFile)
       } catch (error) {
-        console.warn('✗ Cookie file validation failed:', error.message)
-        console.log('✗ Proceeding without cookie file')
+        logger.warn('✗ Cookie file validation failed:', error.message)
+        logger.debug('✗ Proceeding without cookie file')
       }
     } else {
-      console.log('✗ No cookie file provided for metadata extraction')
+      logger.debug('✗ No cookie file provided for metadata extraction')
     }
 
     const output = await runCommand(ytDlpPath, args)
@@ -1145,11 +1146,11 @@ ipcMain.handle('get-video-metadata', async (event, url, cookieFile = null) => {
     }
 
     const duration = Date.now() - startTime
-    console.log(`Metadata extracted in ${duration}ms:`, result.title)
+    logger.debug(`Metadata extracted in ${duration}ms:`, result.title)
     return result
 
   } catch (error) {
-    console.error('Error extracting metadata:', error)
+    logger.error('Error extracting metadata:', error.message)
 
     // Provide more specific error messages
     if (error.message.includes('Video unavailable')) {
@@ -1180,7 +1181,7 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls, cookieFile = null
   }
 
   try {
-    console.log(`Fetching metadata for ${urls.length} videos in batch...`)
+    logger.debug(`Fetching metadata for ${urls.length} videos in batch...`)
     const startTime = Date.now()
 
     // PARALLEL OPTIMIZATION: Split URLs into chunks and process in parallel
@@ -1193,7 +1194,7 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls, cookieFile = null
       chunks.push(urls.slice(i, i + CHUNK_SIZE))
     }
 
-    console.log(`Processing ${urls.length} URLs in ${chunks.length} chunks (${CHUNK_SIZE} URLs/chunk, max ${MAX_PARALLEL} parallel)`)
+    logger.debug(`Processing ${urls.length} URLs in ${chunks.length} chunks (${CHUNK_SIZE} URLs/chunk, max ${MAX_PARALLEL} parallel)`)
 
     // Process chunks in parallel batches
     const allResults = []
@@ -1218,14 +1219,14 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls, cookieFile = null
             const validatedCookieFile = validateCookieFile(cookieFile)
             args.unshift('--cookies', validatedCookieFile)
           } catch (error) {
-            console.warn('✗ Cookie file validation failed for batch:', error.message)
+            logger.warn('✗ Cookie file validation failed for batch:', error.message)
           }
         }
 
         try {
           return await runCommand(ytDlpPath, args)
         } catch (error) {
-          console.error(`Chunk extraction failed for ${chunkUrls.length} URLs:`, error.message)
+          logger.error(`Chunk extraction failed for ${chunkUrls.length} URLs:`, error.message)
           return '' // Return empty on error, don't fail entire batch
         }
       })
@@ -1243,7 +1244,7 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls, cookieFile = null
     const combinedOutput = allResults.join('\n')
 
     if (!combinedOutput.trim()) {
-      console.warn('No metadata returned from parallel batch extraction')
+      logger.warn('No metadata returned from parallel batch extraction')
       return []
     }
 
@@ -1266,22 +1267,22 @@ ipcMain.handle('get-batch-video-metadata', async (event, urls, cookieFile = null
             thumbnail: parts[3] || null
           })
         } else {
-          console.warn(`Skipping malformed line ${i + 1}:`, line)
+          logger.warn(`Skipping malformed line ${i + 1}:`, line)
         }
       } catch (parseError) {
-        console.error(`Error parsing metadata line ${i + 1}:`, parseError)
+        logger.error(`Error parsing metadata line ${i + 1}:`, parseError)
         // Continue processing other lines
       }
     }
 
     const duration = Date.now() - startTime
     const avgTime = duration / urls.length
-    console.log(`Batch metadata extracted: ${results.length}/${urls.length} successful in ${duration}ms (${avgTime.toFixed(1)}ms avg/video) [PARALLEL]`)
+    logger.debug(`Batch metadata extracted: ${results.length}/${urls.length} successful in ${duration}ms (${avgTime.toFixed(1)}ms avg/video) [PARALLEL]`)
 
     return results
 
   } catch (error) {
-    console.error('Error in batch metadata extraction:', error)
+    logger.error('Error in batch metadata extraction:', error.message)
     throw new Error(`Failed to get batch metadata: ${error.message}`)
   }
 })
@@ -1310,7 +1311,7 @@ ipcMain.handle('extract-playlist-videos', async (event, playlistUrl) => {
   const playlistId = match[1]
 
   try {
-    console.log('Extracting playlist videos:', playlistId)
+    logger.debug('Extracting playlist videos:', playlistId)
 
     // Use yt-dlp to extract playlist information
     const args = [
@@ -1344,12 +1345,12 @@ ipcMain.handle('extract-playlist-videos', async (event, playlistUrl) => {
           uploader: videoData.uploader || videoData.channel || null
         })
       } catch (parseError) {
-        console.warn('Failed to parse playlist video:', parseError)
+        logger.warn('Failed to parse playlist video:', parseError)
         // Continue processing other videos
       }
     }
 
-    console.log(`Extracted ${videos.length} videos from playlist`)
+    logger.debug(`Extracted ${videos.length} videos from playlist`)
 
     return {
       success: true,
@@ -1359,7 +1360,7 @@ ipcMain.handle('extract-playlist-videos', async (event, playlistUrl) => {
     }
 
   } catch (error) {
-    console.error('Error extracting playlist:', error)
+    logger.error('Error extracting playlist:', error.message)
 
     if (error.message.includes('Playlist does not exist')) {
       throw new Error('Playlist not found or has been deleted')
@@ -1448,8 +1449,8 @@ async function convertVideoFormat(event, { url, inputPath, format, quality, save
   const outputFilename = `${inputFilename}_${suffix}.${outputExtension}`
   const outputPath = path.join(savePath, outputFilename)
 
-  console.log('Starting format conversion:', { 
-    inputPath, outputPath, format, quality 
+  logger.debug('Starting format conversion:', {
+    inputPath, outputPath, format, quality
   })
 
   // Get video duration for progress calculation
@@ -1501,9 +1502,9 @@ async function convertVideoFormat(event, { url, inputPath, format, quality, save
     // Clean up original file if conversion successful
     try {
       fs.unlinkSync(inputPath)
-      console.log('Cleaned up original file:', inputPath)
+      logger.debug('Cleaned up original file:', inputPath)
     } catch (cleanupError) {
-      console.warn('Failed to clean up original file:', cleanupError.message)
+      logger.warn('Failed to clean up original file:', cleanupError.message)
     }
 
     return {
@@ -1515,7 +1516,7 @@ async function convertVideoFormat(event, { url, inputPath, format, quality, save
     }
 
   } catch (error) {
-    console.error('Format conversion failed:', error)
+    logger.error('Format conversion failed:', error.message)
     throw new Error(`Format conversion failed: ${error.message}`)
   }
 }
@@ -1663,12 +1664,12 @@ function notifyDownloadComplete(filename, success, errorMessage = null) {
       // Fallback to node-notifier
       notifier.notify(notificationOptions, (err) => {
         if (err) {
-          console.error('Notification error:', err)
+          logger.error('Notification error:', err)
         }
       })
     }
   } catch (error) {
-    console.error('Failed to send notification:', error)
+    logger.error('Failed to send notification:', error.message)
   }
 }
 

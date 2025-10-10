@@ -240,7 +240,7 @@ class ErrorHandler {
 
       await window.electronAPI.showNotification(notificationOptions);
     } catch (error) {
-      console.error('Failed to show error notification:', error);
+      logger.error('Failed to show error notification:', error.message);
     }
   }
 
@@ -261,7 +261,7 @@ class ErrorHandler {
       const result = await window.electronAPI.showErrorDialog(dialogOptions);
       return result.response === 0; // Return true if user clicked retry/ok
     } catch (error) {
-      console.error('Failed to show error dialog:', error);
+      logger.error('Failed to show error dialog:', error.message);
       return false;
     }
   }
@@ -370,13 +370,16 @@ class ErrorHandler {
    * @param {Object} errorInfo - Error information
    */
   logError(errorInfo) {
+    // Use logger if available (runtime), fallback to console for tests
+    const log = typeof logger !== 'undefined' ? logger : console;
+
     console.group(`🚨 Error [${errorInfo.type.type}] - ${errorInfo.id}`);
-    console.error('Message:', errorInfo.message);
-    console.error('Suggestion:', errorInfo.suggestion);
-    console.error('Recoverable:', errorInfo.recoverable);
-    console.error('Context:', errorInfo.context);
+    log.error('Message:', errorInfo.message);
+    log.error('Suggestion:', errorInfo.suggestion);
+    log.error('Recoverable:', errorInfo.recoverable);
+    log.error('Context:', errorInfo.context);
     if (errorInfo.technical) {
-      console.error('Technical Details:', errorInfo.technical);
+      log.error('Technical Details:', errorInfo.technical);
     }
     console.groupEnd();
   }

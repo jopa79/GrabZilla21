@@ -35,13 +35,13 @@ const handleSelectSavePath = async function() {
             this.updateSavePathUI(directoryPath);
             
             this.showStatus('Save directory selected successfully', 'success');
-            console.log('Save directory selected:', directoryPath);
+            logger.debug('Save directory selected:', directoryPath);
         } else {
             this.showStatus('Directory selection cancelled', 'info');
         }
         
     } catch (error) {
-        console.error('Error selecting save directory:', error);
+        logger.error('Error selecting save directory:', error.message);
         this.showStatus('Failed to select save directory', 'error');
     }
 };
@@ -66,13 +66,13 @@ const handleSelectCookieFile = async function() {
             this.updateCookieFileUI(cookieFilePath);
             
             this.showStatus('Cookie file selected successfully', 'success');
-            console.log('Cookie file selected:', cookieFilePath);
+            logger.debug('Cookie file selected:', cookieFilePath);
         } else {
             this.showStatus('Cookie file selection cancelled', 'info');
         }
         
     } catch (error) {
-        console.error('Error selecting cookie file:', error);
+        logger.error('Error selecting cookie file:', error.message);
         this.showStatus('Failed to select cookie file', 'error');
     }
 };
@@ -134,13 +134,13 @@ const handleDownloadVideos = async function() {
                         filename: result.filename || 'Downloaded'
                     });
                     
-                    console.log(`Successfully downloaded: ${video.title}`);
+                    logger.debug(`Successfully downloaded: ${video.title}`);
                 } else {
                     throw new Error(result.error || 'Download failed');
                 }
 
             } catch (error) {
-                console.error(`Failed to download video ${video.id}:`, error);
+                logger.error(`Failed to download video ${video.id}:`, error.message);
                 
                 // Update video status to error
                 this.state.updateVideo(video.id, { 
@@ -168,7 +168,7 @@ const handleDownloadVideos = async function() {
         }
 
     } catch (error) {
-        console.error('Error in download process:', error);
+        logger.error('Error in download process:', error.message);
         this.showStatus(`Download process failed: ${error.message}`, 'error');
         
         // Reset state on error
@@ -201,7 +201,7 @@ const fetchVideoMetadata = async function(videoId, url) {
             try {
                 metadata = await window.electronAPI.getVideoMetadata(url);
             } catch (error) {
-                console.warn('Failed to fetch real metadata, using fallback:', error);
+                logger.warn('Failed to fetch real metadata, using fallback:', error);
                 metadata = await this.simulateMetadataFetch(url);
             }
         } else {
@@ -225,11 +225,11 @@ const fetchVideoMetadata = async function(videoId, url) {
             this.state.updateVideo(videoId, updateData);
             this.renderVideoList();
 
-            console.log(`Metadata fetched for video ${videoId}:`, metadata);
+            logger.debug(`Metadata fetched for video ${videoId}:`, metadata);
         }
 
     } catch (error) {
-        console.error(`Failed to fetch metadata for video ${videoId}:`, error);
+        logger.error(`Failed to fetch metadata for video ${videoId}:`, error.message);
         
         // Update video with error state but keep it downloadable
         this.state.updateVideo(videoId, {
@@ -265,7 +265,7 @@ const updateCookieFileUI = function(cookieFilePath) {
 
 const updateBinaryStatus = function(binaryVersions) {
     // Update UI elements to show binary status
-    console.log('Binary status updated:', binaryVersions);
+    logger.debug('Binary status updated:', binaryVersions);
     
     // Store binary status in state for reference
     this.state.binaryStatus = binaryVersions;

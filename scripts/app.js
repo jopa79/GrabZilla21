@@ -1,6 +1,8 @@
 // GrabZilla 2.1 - Application Entry Point
 // Modular architecture with clear separation of concerns
 
+import * as logger from './utils/logger.js';
+
 class GrabZillaApp {
     constructor() {
         this.state = null;
@@ -12,7 +14,7 @@ class GrabZillaApp {
     // Initialize the application
     async init() {
         try {
-            console.log('🚀 Initializing GrabZilla 2.1...');
+            logger.debug('🚀 Initializing GrabZilla 2.1...');
 
             // Initialize event bus
             this.eventBus = window.eventBus;
@@ -51,13 +53,13 @@ class GrabZillaApp {
             this.initializeKeyboardNavigation();
 
             this.initialized = true;
-            console.log('✅ GrabZilla 2.1 initialized successfully');
+            logger.debug('✅ GrabZilla 2.1 initialized successfully');
 
             // Notify that the app is ready
             this.eventBus.emit('app:ready', { app: this });
 
         } catch (error) {
-            console.error('❌ Failed to initialize GrabZilla:', error);
+            logger.error('❌ Failed to initialize GrabZilla:', error.message);
             this.handleInitializationError(error);
         }
     }
@@ -66,7 +68,7 @@ class GrabZillaApp {
     setupErrorHandling() {
         // Handle unhandled errors
         window.addEventListener('error', (event) => {
-            console.error('Global error:', event.error);
+            logger.error('Global error:', event.error);
             this.eventBus.emit('app:error', {
                 type: 'global',
                 error: event.error,
@@ -77,7 +79,7 @@ class GrabZillaApp {
 
         // Handle unhandled promise rejections
         window.addEventListener('unhandledrejection', (event) => {
-            console.error('Unhandled promise rejection:', event.reason);
+            logger.error('Unhandled promise rejection:', event.reason);
             this.eventBus.emit('app:error', {
                 type: 'promise',
                 error: event.reason
@@ -401,7 +403,7 @@ class GrabZillaApp {
         if (target.classList.contains('quality-select')) {
             const quality = target.value;
             this.state.updateVideo(videoId, { quality });
-            console.log(`Updated video ${videoId} quality to ${quality}`);
+            logger.debug(`Updated video ${videoId} quality to ${quality}`);
             return;
         }
 
@@ -409,7 +411,7 @@ class GrabZillaApp {
         if (target.classList.contains('format-select')) {
             const format = target.value;
             this.state.updateVideo(videoId, { format });
-            console.log(`Updated video ${videoId} format to ${format}`);
+            logger.debug(`Updated video ${videoId} format to ${format}`);
             return;
         }
     }
@@ -452,7 +454,7 @@ class GrabZillaApp {
                 this.updateStatusMessage('Video removed');
             }
         } catch (error) {
-            console.error('Error removing video:', error);
+            logger.error('Error removing video:', error.message);
             this.showError(`Failed to remove video: ${error.message}`);
         }
     }
@@ -539,7 +541,7 @@ class GrabZillaApp {
 
             this.showPlaylistModal(result);
         } catch (error) {
-            console.error('Error handling playlist:', error);
+            logger.error('Error handling playlist:', error.message);
             this.showError(`Playlist extraction failed: ${error.message}`);
         }
     }
@@ -720,7 +722,7 @@ class GrabZillaApp {
                 description.textContent = metadata.description.slice(0, 500) + (metadata.description.length > 500 ? '...' : '');
             }
         } catch (error) {
-            console.error('Error fetching preview metadata:', error);
+            logger.error('Error fetching preview metadata:', error.message);
             views.querySelector('span').textContent = 'N/A';
             likes.querySelector('span').textContent = 'N/A';
             description.textContent = 'Unable to load video information.';
@@ -1296,7 +1298,7 @@ class GrabZillaApp {
             }
 
         } catch (error) {
-            console.error('Error adding videos:', error);
+            logger.error('Error adding videos:', error.message);
             this.showError(`Failed to add videos: ${error.message}`);
         }
     }
@@ -1338,7 +1340,7 @@ class GrabZillaApp {
             }
 
         } catch (error) {
-            console.error('Error selecting save path:', error);
+            logger.error('Error selecting save path:', error.message);
             this.showError(`Failed to select save path: ${error.message}`);
         }
     }
@@ -1372,7 +1374,7 @@ class GrabZillaApp {
             }
 
         } catch (error) {
-            console.error('Error selecting cookie file:', error);
+            logger.error('Error selecting cookie file:', error.message);
             this.showError(`Failed to select cookie file: ${error.message}`);
         }
     }
@@ -1401,7 +1403,7 @@ class GrabZillaApp {
             // On success, no message needed - folder opens in file explorer
 
         } catch (error) {
-            console.error('Error opening folder:', error);
+            logger.error('Error opening folder:', error.message);
             this.showError(`Failed to open folder: ${error.message}`);
         }
     }
@@ -1430,7 +1432,7 @@ class GrabZillaApp {
                 this.updateStatusMessage('Clipboard monitoring disabled');
             }
         } catch (error) {
-            console.error('Error toggling clipboard monitor:', error);
+            logger.error('Error toggling clipboard monitor:', error.message);
             this.showError(`Clipboard monitoring error: ${error.message}`);
         }
     }
@@ -1453,7 +1455,7 @@ class GrabZillaApp {
                 await this.handleAddVideo();
             }
         } catch (error) {
-            console.error('Error showing clipboard notification:', error);
+            logger.error('Error showing clipboard notification:', error.message);
         }
     }
 
@@ -1481,7 +1483,7 @@ class GrabZillaApp {
                 this.showToast(`Export failed: ${result.error}`, 'error');
             }
         } catch (error) {
-            console.error('Error exporting video list:', error);
+            logger.error('Error exporting video list:', error.message);
             this.showError('Failed to export video list');
         }
     }
@@ -1549,7 +1551,7 @@ class GrabZillaApp {
             this.showToast(message, 'success');
             this.renderVideoList();
         } catch (error) {
-            console.error('Error importing video list:', error);
+            logger.error('Error importing video list:', error.message);
             this.showError('Failed to import video list');
         }
     }
@@ -1590,7 +1592,7 @@ class GrabZillaApp {
                 try {
                     const result = await window.electronAPI.checkFileExists(filePath);
                     if (!result.exists) {
-                        console.log(`File missing for ${video.title}, resetting to ready`);
+                        logger.debug(`File missing for ${video.title}, resetting to ready`);
                         this.state.updateVideo(video.id, {
                             status: 'ready',
                             progress: 0,
@@ -1599,7 +1601,7 @@ class GrabZillaApp {
                         });
                     }
                 } catch (error) {
-                    console.error(`Error checking file existence for ${video.title}:`, error);
+                    logger.error(`Error checking file existence for ${video.title}:`, error.message);
                 }
             }
         }
@@ -1631,7 +1633,7 @@ class GrabZillaApp {
 
         // PARALLEL DOWNLOADS: Start all downloads simultaneously
         // The DownloadManager will handle concurrency limits automatically
-        console.log(`Starting ${videos.length} downloads in parallel...`);
+        logger.debug(`Starting ${videos.length} downloads in parallel...`);
 
         const downloadPromises = videos.map(async (video) => {
             try {
@@ -1675,7 +1677,7 @@ class GrabZillaApp {
                 }
 
             } catch (error) {
-                console.error(`Error downloading video ${video.id}:`, error);
+                logger.error(`Error downloading video ${video.id}:`, error.message);
                 this.state.updateVideo(video.id, {
                     status: 'error',
                     error: error.message
@@ -1720,7 +1722,7 @@ class GrabZillaApp {
                 this.showToast(result.message || 'Failed to pause download', 'error');
             }
         } catch (error) {
-            console.error('Error pausing download:', error);
+            logger.error('Error pausing download:', error.message);
             this.showToast('Failed to pause download', 'error');
         }
     }
@@ -1741,7 +1743,7 @@ class GrabZillaApp {
                 this.showToast(result.message || 'Failed to resume download', 'error');
             }
         } catch (error) {
-            console.error('Error resuming download:', error);
+            logger.error('Error resuming download:', error.message);
             this.showToast('Failed to resume download', 'error');
         }
     }
@@ -1778,7 +1780,7 @@ class GrabZillaApp {
 
             await window.electronAPI.showNotification(notificationOptions);
         } catch (error) {
-            console.warn('Failed to show notification:', error);
+            logger.warn('Failed to show notification:', error);
         }
     }
 
@@ -1812,7 +1814,7 @@ class GrabZillaApp {
                     try {
                         await window.electronAPI.cancelDownload(video.id);
                     } catch (error) {
-                        console.error(`Error cancelling download for ${video.id}:`, error);
+                        logger.error(`Error cancelling download for ${video.id}:`, error.message);
                     }
                 }
             } else {
@@ -1847,7 +1849,7 @@ class GrabZillaApp {
             this.updateStatusMessage(hasSelection ? 'Selected downloads cancelled' : 'Downloads cancelled');
 
         } catch (error) {
-            console.error('Error cancelling downloads:', error);
+            logger.error('Error cancelling downloads:', error.message);
             this.showError(`Failed to cancel downloads: ${error.message}`);
         }
     }
@@ -1905,7 +1907,7 @@ class GrabZillaApp {
             }
 
         } catch (error) {
-            console.error('Error checking dependencies:', error);
+            logger.error('Error checking dependencies:', error.message);
             this.showError(`Failed to check dependencies: ${error.message}`);
         } finally {
             // Restore button state
@@ -1935,7 +1937,7 @@ class GrabZillaApp {
     onVideosReordered(data) {
         // Re-render entire list to reflect new order
         this.renderVideoList();
-        console.log('Video order updated:', data);
+        logger.debug('Video order updated:', data);
     }
 
     onVideosCleared(data) {
@@ -2316,7 +2318,7 @@ class GrabZillaApp {
 
     showError(message) {
         this.updateStatusMessage(`Error: ${message}`);
-        console.error('App Error:', message);
+        logger.error('App Error:', message);
         this.eventBus.emit('app:error', { type: 'user', message });
     }
 
@@ -2462,12 +2464,12 @@ class GrabZillaApp {
         try {
             const result = await window.electronAPI.createDirectory(savePath);
             if (!result.success) {
-                console.warn('Failed to create save directory:', result.error);
+                logger.warn('Failed to create save directory:', result.error);
             } else {
-                console.log('Save directory ready:', result.path);
+                logger.debug('Save directory ready:', result.path);
             }
         } catch (error) {
-            console.error('Error creating directory:', error);
+            logger.error('Error creating directory:', error.message);
         }
     }
 
@@ -2498,7 +2500,7 @@ class GrabZillaApp {
                 this.updateBinaryVersionDisplay(normalizedVersions);
             }
         } catch (error) {
-            console.error('Error checking binary status:', error);
+            logger.error('Error checking binary status:', error.message);
             // Set missing status on error
             this.updateDependenciesButtonStatus('missing');
             this.updateBinaryVersionDisplay(null);
@@ -2563,7 +2565,7 @@ class GrabZillaApp {
                 this.updateBinaryVersionDisplay(normalizedVersions);
             }
         } catch (error) {
-            console.error('Error checking binary status:', error);
+            logger.error('Error checking binary status:', error.message);
             // Set missing status on error
             this.updateDependenciesButtonStatus('missing');
             this.updateBinaryVersionDisplay(null);
@@ -2648,7 +2650,7 @@ class GrabZillaApp {
             if (savedState) {
                 const data = JSON.parse(savedState);
                 this.state.fromJSON(data);
-                console.log('✅ Loaded saved state');
+                logger.debug('✅ Loaded saved state');
 
                 // Re-render video list to show restored videos
                 this.renderVideoList();
@@ -2656,7 +2658,7 @@ class GrabZillaApp {
                 this.updateStatsDisplay();
             }
         } catch (error) {
-            console.warn('Failed to load saved state:', error);
+            logger.warn('Failed to load saved state:', error);
         }
     }
 
@@ -2665,7 +2667,7 @@ class GrabZillaApp {
             const stateData = this.state.toJSON();
             localStorage.setItem('grabzilla-state', JSON.stringify(stateData));
         } catch (error) {
-            console.warn('Failed to save state:', error);
+            logger.warn('Failed to save state:', error);
         }
     }
 
@@ -2688,7 +2690,7 @@ class GrabZillaApp {
         this.eventBus?.removeAllListeners();
 
         this.initialized = false;
-        console.log('🧹 GrabZilla app destroyed');
+        logger.debug('🧹 GrabZilla app destroyed');
     }
 }
 

@@ -58,7 +58,7 @@ async function handleDownloadVideos() {
         });
 
         this.showStatus(`Starting download of ${readyVideos.length} video(s)...`, 'info');
-        console.log('Starting downloads for videos:', readyVideos.map(v => ({ id: v.id, url: v.url, title: v.title })));
+        logger.debug('Starting downloads for videos:', readyVideos.map(v => ({ id: v.id, url: v.url, title: v.title })));
 
         let completedCount = 0;
         let errorCount = 0;
@@ -67,7 +67,7 @@ async function handleDownloadVideos() {
         // The DownloadManager on the backend will handle concurrency limits
         const downloadPromises = readyVideos.map(async (video) => {
             try {
-                console.log(`Queueing download for video ${video.id}: ${video.title}`);
+                logger.debug(`Queueing download for video ${video.id}: ${video.title}`);
 
                 // Update video status to downloading (queued)
                 this.state.updateVideo(video.id, {
@@ -87,7 +87,7 @@ async function handleDownloadVideos() {
                     cookieFile: this.state.config.cookieFile
                 };
 
-                console.log(`Download options for video ${video.id}:`, downloadOptions);
+                logger.debug(`Download options for video ${video.id}:`, downloadOptions);
 
                 // Start download (returns immediately, queued in DownloadManager)
                 const result = await window.electronAPI.downloadVideo(downloadOptions);
@@ -102,13 +102,13 @@ async function handleDownloadVideos() {
                     });
 
                     completedCount++;
-                    console.log(`Successfully downloaded video ${video.id}: ${video.title}`);
+                    logger.debug(`Successfully downloaded video ${video.id}: ${video.title}`);
                 } else {
                     throw new Error(result.error || 'Download failed');
                 }
 
             } catch (error) {
-                console.error(`Failed to download video ${video.id}:`, error);
+                logger.error(`Failed to download video ${video.id}:`, error.message);
 
                 // Update video status to error
                 this.state.updateVideo(video.id, {
@@ -123,7 +123,7 @@ async function handleDownloadVideos() {
         });
 
         // Wait for ALL downloads to complete in parallel
-        console.log(`⚡ Starting ${downloadPromises.length} parallel downloads (DownloadManager handles concurrency)...`);
+        logger.debug(`⚡ Starting ${downloadPromises.length} parallel downloads (DownloadManager handles concurrency)...`);
         await Promise.allSettled(downloadPromises);
 
         // Update UI after all downloads complete
@@ -147,10 +147,10 @@ async function handleDownloadVideos() {
             this.showStatus(`⚠️ Downloaded ${completedCount} video(s), ${errorCount} failed`, 'warning');
         }
 
-        console.log(`🏁 Download session completed: ${completedCount} successful, ${errorCount} failed`);
+        logger.debug(`🏁 Download session completed: ${completedCount} successful, ${errorCount} failed`);
 
     } catch (error) {
-        console.error('Error in download process:', error);
+        logger.error('Error in download process:', error.message);
         this.showStatus(`Download process failed: ${error.message}`, 'error');
         
         // Reset state on error
@@ -165,7 +165,7 @@ async function handleDownloadVideos() {
  */
 async function fetchVideoMetadata(videoId, url) {
     try {
-        console.log(`Starting metadata fetch for video ${videoId}:`, url);
+        logger.debug(`Starting metadata fetch for video ${videoId}:`, url);
         
         // Update video status to indicate metadata loading
         this.state.updateVideo(videoId, {
@@ -187,16 +187,16 @@ async function fetchVideoMetadata(videoId, url) {
         let metadata;
         if (window.electronAPI) {
             try {
-                console.log(`Fetching real metadata for video ${videoId} via IPC`);
+                logger.debug(`Fetching real metadata for video ${videoId} via IPC`);
                 metadata = await window.electronAPI.getVideoMetadata(url);
-                console.log(`Real metadata received for video ${videoId}:`, metadata);
+                logger.debug(`Real metadata received for video ${videoId}:`, metadata);
             } catch (error) {
-                console.warn(`Failed to fetch real metadata for video ${videoId}, using fallback:`, error);
+                logger.warn(`Failed to fetch real metadata for video ${videoId}, using fallback:`, error);
                 metadata = await this.simulateMetadataFetch(url);
             }
         } else {
             // Fallback to simulation in browser mode
-            console.warn('Electron API not available, using simulation for metadata');
+            logger.warn('Electron API not available, using simulation for metadata');
             metadata = await this.simulateMetadataFetch(url);
         }
 
@@ -217,11 +217,11 @@ async function fetchVideoMetadata(videoId, url) {
             this.state.updateVideo(videoId, updateData);
             this.renderVideoList();
 
-            console.log(`Metadata successfully updated for video ${videoId}:`, updateData);
+            logger.debug(`Metadata successfully updated for video ${videoId}:`, updateData);
         }
 
     } catch (error) {
-        console.error(`Failed to fetch metadata for video ${videoId}:`, error);
+        logger.error(`Failed to fetch metadata for video ${videoId}:`, error.message);
         
         // Update video with error state but keep it downloadable
         this.state.updateVideo(videoId, {
@@ -240,7 +240,7 @@ async function fetchVideoMetadata(videoId, url) {
 function handleDownloadProgress(progressData) {
     const { url, progress, status, stage, conversionSpeed } = progressData;
     
-    console.log('Download progress update:', progressData);
+    logger.debug('Download progress update:', progressData);
     
     // Find video by URL and update progress
     const video = this.state.videos.find(v => v.url === url);
@@ -265,9 +265,9 @@ function handleDownloadProgress(progressData) {
         this.renderVideoList();
         
         const speedInfo = conversionSpeed ? ` (${conversionSpeed}x speed)` : '';
-        console.log(`Progress updated for video ${video.id}: ${progress}% (${status})${speedInfo}`);
+        logger.debug(`Progress updated for video ${video.id}: ${progress}% (${status})${speedInfo}`);
     } else {
-        console.warn('Received progress update for unknown video URL:', url);
+        logger.warn('Received progress update for unknown video URL:', url);
     }
 }
 
@@ -276,13 +276,13 @@ function handleDownloadProgress(progressData) {
  */
 async function checkBinaries() {
     if (!window.electronAPI) {
-        console.warn('Electron API not available - running in browser mode');
+        logger.warn('Electron API not available - running in browser mode');
         this.showStatus('Running in browser mode - download functionality limited', 'warning');
         return;
     }
 
     try {
-        console.log('Checking yt-dlp and ffmpeg binaries...');
+        logger.debug('Checking yt-dlp and ffmpeg binaries...');
         this.showStatus('Checking dependencies...', 'info');
         
         const binaryVersions = await window.electronAPI.checkBinaryVersions();
@@ -291,16 +291,16 @@ async function checkBinaries() {
         this.updateBinaryStatus(binaryVersions);
         
         if (binaryVersions.ytDlp.available && binaryVersions.ffmpeg.available) {
-            console.log('All required binaries are available');
-            console.log('yt-dlp version:', binaryVersions.ytDlp.version);
-            console.log('ffmpeg version:', binaryVersions.ffmpeg.version);
+            logger.debug('All required binaries are available');
+            logger.debug('yt-dlp version:', binaryVersions.ytDlp.version);
+            logger.debug('ffmpeg version:', binaryVersions.ffmpeg.version);
             this.showStatus('All dependencies ready', 'success');
         } else {
             const missing = [];
             if (!binaryVersions.ytDlp.available) missing.push('yt-dlp');
             if (!binaryVersions.ffmpeg.available) missing.push('ffmpeg');
             
-            console.warn('Missing binaries:', missing);
+            logger.warn('Missing binaries:', missing);
             this.showStatus(`Missing dependencies: ${missing.join(', ')}`, 'error');
         }
         
@@ -308,7 +308,7 @@ async function checkBinaries() {
         this.state.binaryStatus = binaryVersions;
         
     } catch (error) {
-        console.error('Error checking binaries:', error);
+        logger.error('Error checking binaries:', error.message);
         this.showStatus('Failed to check dependencies', 'error');
     }
 }
@@ -317,7 +317,7 @@ async function checkBinaries() {
  * Update binary status UI based on version check results
  */
 function updateBinaryStatus(binaryVersions) {
-    console.log('Binary status updated:', binaryVersions);
+    logger.debug('Binary status updated:', binaryVersions);
     
     // Update dependency status indicators if they exist
     const ytDlpStatus = document.getElementById('ytdlp-status');
@@ -366,13 +366,13 @@ async function handleSelectSaveDirectory() {
             this.updateSavePathUI(directoryPath);
             
             this.showStatus('Save directory selected successfully', 'success');
-            console.log('Save directory selected:', directoryPath);
+            logger.debug('Save directory selected:', directoryPath);
         } else {
             this.showStatus('Directory selection cancelled', 'info');
         }
         
     } catch (error) {
-        console.error('Error selecting save directory:', error);
+        logger.error('Error selecting save directory:', error.message);
         this.showStatus('Failed to select save directory', 'error');
     }
 }
@@ -396,13 +396,13 @@ async function handleSelectCookieFile() {
             this.updateCookieFileUI(cookieFilePath);
             
             this.showStatus('Cookie file selected successfully', 'success');
-            console.log('Cookie file selected:', cookieFilePath);
+            logger.debug('Cookie file selected:', cookieFilePath);
         } else {
             this.showStatus('Cookie file selection cancelled', 'info');
         }
         
     } catch (error) {
-        console.error('Error selecting cookie file:', error);
+        logger.error('Error selecting cookie file:', error.message);
         this.showStatus('Failed to select cookie file', 'error');
     }
 }
@@ -469,13 +469,13 @@ async function handleCancelConversions(videoId = null) {
 
             this.renderVideoList();
             this.showStatus(result.message || 'Conversions cancelled successfully', 'success');
-            console.log('Conversions cancelled:', result);
+            logger.debug('Conversions cancelled:', result);
         } else {
             this.showStatus('Failed to cancel conversions', 'error');
         }
 
     } catch (error) {
-        console.error('Error cancelling conversions:', error);
+        logger.error('Error cancelling conversions:', error.message);
         this.showStatus(`Failed to cancel conversions: ${error.message}`, 'error');
     }
 }
@@ -492,7 +492,7 @@ async function getActiveConversions() {
         const result = await window.electronAPI.getActiveConversions();
         return result;
     } catch (error) {
-        console.error('Error getting active conversions:', error);
+        logger.error('Error getting active conversions:', error.message);
         return { success: false, conversions: [], error: error.message };
     }
 }
@@ -530,10 +530,10 @@ async function handleCancelDownloads() {
         this.renderVideoList();
 
         this.showStatus(`Cancelled ${processingVideos.length} active operations`, 'success');
-        console.log(`Cancelled ${processingVideos.length} downloads/conversions`);
+        logger.debug(`Cancelled ${processingVideos.length} downloads/conversions`);
 
     } catch (error) {
-        console.error('Error cancelling downloads:', error);
+        logger.error('Error cancelling downloads:', error.message);
         this.showStatus(`Failed to cancel operations: ${error.message}`, 'error');
     }
 }

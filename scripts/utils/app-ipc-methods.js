@@ -33,13 +33,13 @@ async function handleSelectCookieFile() {
             this.updateCookieFileUI(cookieFilePath);
             
             this.showStatus('Cookie file selected successfully', 'success');
-            console.log('Cookie file selected:', cookieFilePath);
+            logger.debug('Cookie file selected:', cookieFilePath);
         } else {
             this.showStatus('Cookie file selection cancelled', 'info');
         }
         
     } catch (error) {
-        console.error('Error selecting cookie file:', error);
+        logger.error('Error selecting cookie file:', error.message);
         this.showStatus('Failed to select cookie file', 'error');
     }
 }
@@ -66,13 +66,13 @@ async function handleSelectSaveDirectory() {
             this.updateSavePathUI(directoryPath);
             
             this.showStatus('Save directory selected successfully', 'success');
-            console.log('Save directory selected:', directoryPath);
+            logger.debug('Save directory selected:', directoryPath);
         } else {
             this.showStatus('Directory selection cancelled', 'info');
         }
         
     } catch (error) {
-        console.error('Error selecting save directory:', error);
+        logger.error('Error selecting save directory:', error.message);
         this.showStatus('Failed to select save directory', 'error');
     }
 }
@@ -143,13 +143,13 @@ async function handleDownloadVideos() {
                         filename: result.filename || 'Downloaded'
                     });
                     
-                    console.log(`Successfully downloaded: ${video.title}`);
+                    logger.debug(`Successfully downloaded: ${video.title}`);
                 } else {
                     throw new Error(result.error || 'Download failed');
                 }
 
             } catch (error) {
-                console.error(`Failed to download video ${video.id}:`, error);
+                logger.error(`Failed to download video ${video.id}:`, error.message);
                 
                 // Update video status to error
                 this.state.updateVideo(video.id, { 
@@ -180,7 +180,7 @@ async function handleDownloadVideos() {
         }
 
     } catch (error) {
-        console.error('Error in download process:', error);
+        logger.error('Error in download process:', error.message);
         this.showStatus(`Download process failed: ${error.message}`, 'error');
         
         // Reset state on error
@@ -216,7 +216,7 @@ async function fetchVideoMetadata(videoId, url) {
             try {
                 metadata = await window.electronAPI.getVideoMetadata(url);
             } catch (error) {
-                console.warn('Failed to fetch real metadata, using fallback:', error);
+                logger.warn('Failed to fetch real metadata, using fallback:', error);
                 metadata = await this.simulateMetadataFetch(url);
             }
         } else {
@@ -240,11 +240,11 @@ async function fetchVideoMetadata(videoId, url) {
             this.state.updateVideo(videoId, updateData);
             this.renderVideoList();
 
-            console.log(`Metadata fetched for video ${videoId}:`, metadata);
+            logger.debug(`Metadata fetched for video ${videoId}:`, metadata);
         }
 
     } catch (error) {
-        console.error(`Failed to fetch metadata for video ${videoId}:`, error);
+        logger.error(`Failed to fetch metadata for video ${videoId}:`, error.message);
         
         // Update video with error state but keep it downloadable
         this.state.updateVideo(videoId, {
@@ -263,33 +263,33 @@ async function fetchVideoMetadata(videoId, url) {
  */
 async function checkBinaries() {
     if (!window.electronAPI) {
-        console.warn('Electron API not available - running in browser mode');
+        logger.warn('Electron API not available - running in browser mode');
         return;
     }
 
     try {
-        console.log('Checking yt-dlp and ffmpeg binaries...');
+        logger.debug('Checking yt-dlp and ffmpeg binaries...');
         const binaryVersions = await window.electronAPI.checkBinaryVersions();
         
         // Update UI based on binary availability
         this.updateBinaryStatus(binaryVersions);
         
         if (binaryVersions.ytDlp.available && binaryVersions.ffmpeg.available) {
-            console.log('All required binaries are available');
-            console.log('yt-dlp version:', binaryVersions.ytDlp.version);
-            console.log('ffmpeg version:', binaryVersions.ffmpeg.version);
+            logger.debug('All required binaries are available');
+            logger.debug('yt-dlp version:', binaryVersions.ytDlp.version);
+            logger.debug('ffmpeg version:', binaryVersions.ffmpeg.version);
             this.showStatus('All dependencies ready', 'success');
         } else {
             const missing = [];
             if (!binaryVersions.ytDlp.available) missing.push('yt-dlp');
             if (!binaryVersions.ffmpeg.available) missing.push('ffmpeg');
             
-            console.warn('Missing binaries:', missing);
+            logger.warn('Missing binaries:', missing);
             this.showStatus(`Missing dependencies: ${missing.join(', ')}`, 'error');
         }
         
     } catch (error) {
-        console.error('Error checking binaries:', error);
+        logger.error('Error checking binaries:', error.message);
         this.showStatus('Failed to check dependencies', 'error');
     }
 }
@@ -324,7 +324,7 @@ function updateSavePathUI(directoryPath) {
  */
 function updateBinaryStatus(binaryVersions) {
     // Update UI elements to show binary status
-    console.log('Binary status updated:', binaryVersions);
+    logger.debug('Binary status updated:', binaryVersions);
     
     // Store binary status in state for reference
     this.state.binaryStatus = binaryVersions;

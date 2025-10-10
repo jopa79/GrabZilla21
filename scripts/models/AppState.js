@@ -44,7 +44,7 @@ class AppState {
                 const platform = window.electronAPI.getPlatform();
                 return defaultPaths[platform] || defaultPaths.linux;
             } catch (error) {
-                console.warn('Failed to get platform:', error);
+                logger.warn('Failed to get platform:', error);
                 return defaultPaths.win32;
             }
         }
@@ -110,17 +110,17 @@ class AppState {
         // Prefetch metadata in background (non-blocking, parallel for better UX)
         // Videos will update automatically via Video.fromUrl() metadata fetch
         if (uniqueUrls.length > 0 && window.MetadataService) {
-            console.log(`[Batch Metadata] Starting background fetch for ${uniqueUrls.length} URLs...`);
+            logger.debug(`[Batch Metadata] Starting background fetch for ${uniqueUrls.length} URLs...`);
             const startTime = performance.now();
 
             // Don't await - let it run in background
             window.MetadataService.prefetchMetadata(uniqueUrls)
                 .then(() => {
                     const duration = performance.now() - startTime;
-                    console.log(`[Batch Metadata] Completed in ${Math.round(duration)}ms (${Math.round(duration / uniqueUrls.length)}ms avg/video)`);
+                    logger.debug(`[Batch Metadata] Completed in ${Math.round(duration)}ms (${Math.round(duration / uniqueUrls.length)}ms avg/video)`);
                 })
                 .catch(error => {
-                    console.warn('[Batch Metadata] Batch prefetch failed:', error.message);
+                    logger.warn('[Batch Metadata] Batch prefetch failed:', error.message);
                 });
         }
 
@@ -150,7 +150,7 @@ class AppState {
             videoId: movedVideo.id
         });
 
-        console.log(`Reordered video from position ${fromIndex} to ${adjustedToIndex}`);
+        logger.debug(`Reordered video from position ${fromIndex} to ${adjustedToIndex}`);
     }
 
     // Remove video from state
@@ -366,7 +366,7 @@ class AppState {
                 try {
                     callback(data);
                 } catch (error) {
-                    console.error(`Error in event listener for ${event}:`, error);
+                    logger.error(`Error in event listener for ${event}:`, error.message);
                 }
             });
         }
@@ -464,7 +464,7 @@ class AppState {
             this.emit('stateImported', { data });
             return true;
         } catch (error) {
-            console.error('Failed to restore state from JSON:', error);
+            logger.error('Failed to restore state from JSON:', error.message);
             return false;
         }
     }
@@ -476,7 +476,7 @@ class AppState {
             try {
                 return video instanceof window.Video && video.url;
             } catch (error) {
-                console.warn('Removing invalid video:', error);
+                logger.warn('Removing invalid video:', error);
                 return false;
             }
         });

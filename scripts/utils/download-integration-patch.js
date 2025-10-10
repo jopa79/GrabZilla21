@@ -19,18 +19,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Wait a bit more for the app to initialize
     setTimeout(function() {
         if (typeof window.app !== 'undefined' && window.app instanceof GrabZilla) {
-            console.log('Applying enhanced download method patches...');
+            logger.debug('Applying enhanced download method patches...');
             applyDownloadPatches(window.app);
         } else {
-            console.warn('GrabZilla app not found, retrying...');
+            logger.warn('GrabZilla app not found, retrying...');
             // Retry after a longer delay
             setTimeout(function() {
                 if (typeof window.app !== 'undefined' && window.app instanceof GrabZilla) {
-                    console.log('Applying enhanced download method patches (retry)...');
+                    logger.debug('Applying enhanced download method patches (retry)...');
                     applyDownloadPatches(window.app);
                 } else {
-                    console.error('Failed to find GrabZilla app instance for patching');
-                    console.log('Available on window:', Object.keys(window).filter(k => k.includes('app') || k.includes('grab')));
+                    logger.error('Failed to find GrabZilla app instance for patching');
+                    logger.debug('Available on window:', Object.keys(window).filter(k => k.includes('app') || k.includes('grab')));
                 }
             }, 2000);
         }
@@ -45,30 +45,30 @@ function applyDownloadPatches(app) {
     try {
         // Load enhanced methods
         if (typeof window.EnhancedDownloadMethods === 'undefined') {
-            console.error('Enhanced download methods not loaded');
+            logger.error('Enhanced download methods not loaded');
             return;
         }
 
         const methods = window.EnhancedDownloadMethods;
 
         // Patch core download methods
-        console.log('Patching handleDownloadVideos method...');
+        logger.debug('Patching handleDownloadVideos method...');
         app.handleDownloadVideos = methods.handleDownloadVideos.bind(app);
 
-        console.log('Patching fetchVideoMetadata method...');
+        logger.debug('Patching fetchVideoMetadata method...');
         app.fetchVideoMetadata = methods.fetchVideoMetadata.bind(app);
 
-        console.log('Patching handleDownloadProgress method...');
+        logger.debug('Patching handleDownloadProgress method...');
         app.handleDownloadProgress = methods.handleDownloadProgress.bind(app);
 
-        console.log('Patching checkBinaries method...');
+        logger.debug('Patching checkBinaries method...');
         app.checkBinaries = methods.checkBinaries.bind(app);
 
         // Patch UI update methods
-        console.log('Patching updateBinaryStatus method...');
+        logger.debug('Patching updateBinaryStatus method...');
         app.updateBinaryStatus = methods.updateBinaryStatus.bind(app);
 
-        console.log('Patching file selection methods...');
+        logger.debug('Patching file selection methods...');
         app.handleSelectSaveDirectory = methods.handleSelectSaveDirectory.bind(app);
         app.handleSelectCookieFile = methods.handleSelectCookieFile.bind(app);
 
@@ -77,16 +77,16 @@ function applyDownloadPatches(app) {
         app.updateCookieFileUI = methods.updateCookieFileUI.bind(app);
 
         // Re-initialize binary checking with enhanced methods
-        console.log('Re-initializing binary check with enhanced methods...');
+        logger.debug('Re-initializing binary check with enhanced methods...');
         app.checkBinaries();
 
         // Update event listeners for file selection if they exist
         patchFileSelectionListeners(app);
 
-        console.log('Enhanced download method patches applied successfully!');
+        logger.debug('Enhanced download method patches applied successfully!');
 
     } catch (error) {
-        console.error('Error applying download method patches:', error);
+        logger.error('Error applying download method patches:', error.message);
     }
 }
 
@@ -108,7 +108,7 @@ function patchFileSelectionListeners(app) {
                 app.handleSelectSaveDirectory();
             });
             
-            console.log('Patched save directory selection listener');
+            logger.debug('Patched save directory selection listener');
         }
 
         // Patch cookie file selection
@@ -123,7 +123,7 @@ function patchFileSelectionListeners(app) {
                 app.handleSelectCookieFile();
             });
             
-            console.log('Patched cookie file selection listener');
+            logger.debug('Patched cookie file selection listener');
         }
 
         // Patch download button if it exists
@@ -138,11 +138,11 @@ function patchFileSelectionListeners(app) {
                 app.handleDownloadVideos();
             });
             
-            console.log('Patched download button listener');
+            logger.debug('Patched download button listener');
         }
 
     } catch (error) {
-        console.error('Error patching file selection listeners:', error);
+        logger.error('Error patching file selection listeners:', error.message);
     }
 }
 

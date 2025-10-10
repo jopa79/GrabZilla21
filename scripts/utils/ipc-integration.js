@@ -58,7 +58,7 @@ class IPCManager {
                 try {
                     callback({ url, progress });
                 } catch (error) {
-                    console.error(`Error in download progress listener ${listenerId}:`, error);
+                    logger.error(`Error in download progress listener ${listenerId}:`, error.message);
                 }
             });
         });
@@ -98,7 +98,7 @@ class IPCManager {
             const directoryPath = await window.electronAPI.selectSaveDirectory();
             return directoryPath;
         } catch (error) {
-            console.error('Error selecting save directory:', error);
+            logger.error('Error selecting save directory:', error.message);
             throw new Error('Failed to select save directory');
         }
     }
@@ -116,7 +116,7 @@ class IPCManager {
             const filePath = await window.electronAPI.selectCookieFile();
             return filePath;
         } catch (error) {
-            console.error('Error selecting cookie file:', error);
+            logger.error('Error selecting cookie file:', error.message);
             throw new Error('Failed to select cookie file');
         }
     }
@@ -134,7 +134,7 @@ class IPCManager {
             const versions = await window.electronAPI.checkBinaryVersions();
             return versions;
         } catch (error) {
-            console.error('Error checking binary versions:', error);
+            logger.error('Error checking binary versions:', error.message);
             throw new Error('Failed to check binary versions');
         }
     }
@@ -158,7 +158,7 @@ class IPCManager {
             const metadata = await window.electronAPI.getVideoMetadata(url, cookieFile);
             return metadata;
         } catch (error) {
-            console.error('Error fetching video metadata:', error);
+            logger.error('Error fetching video metadata:', error.message);
             throw new Error(`Failed to fetch metadata: ${error.message}`);
         }
     }
@@ -182,7 +182,7 @@ class IPCManager {
             const results = await window.electronAPI.getBatchVideoMetadata(urls, cookieFile);
             return results;
         } catch (error) {
-            console.error('Error fetching batch video metadata:', error);
+            logger.error('Error fetching batch video metadata:', error.message);
             throw new Error(`Failed to fetch batch metadata: ${error.message}`);
         }
     }
@@ -224,7 +224,7 @@ class IPCManager {
             const result = await window.electronAPI.downloadVideo(sanitizedOptions);
             return result;
         } catch (error) {
-            console.error('Error downloading video:', error);
+            logger.error('Error downloading video:', error.message);
             throw new Error(`Download failed: ${error.message}`);
         }
     }
@@ -248,7 +248,7 @@ class IPCManager {
             const result = await window.electronAPI.getDownloadStats();
             return result.stats;
         } catch (error) {
-            console.error('Error getting download stats:', error);
+            logger.error('Error getting download stats:', error.message);
             throw new Error(`Failed to get download stats: ${error.message}`);
         }
     }
@@ -267,7 +267,7 @@ class IPCManager {
             const result = await window.electronAPI.cancelDownload(videoId);
             return result.success;
         } catch (error) {
-            console.error('Error cancelling download:', error);
+            logger.error('Error cancelling download:', error.message);
             throw new Error(`Failed to cancel download: ${error.message}`);
         }
     }
@@ -285,7 +285,7 @@ class IPCManager {
             const result = await window.electronAPI.cancelAllDownloads();
             return result;
         } catch (error) {
-            console.error('Error cancelling all downloads:', error);
+            logger.error('Error cancelling all downloads:', error.message);
             throw new Error(`Failed to cancel downloads: ${error.message}`);
         }
     }
@@ -302,7 +302,7 @@ class IPCManager {
         try {
             return window.electronAPI.getAppVersion();
         } catch (error) {
-            console.error('Error getting app version:', error);
+            logger.error('Error getting app version:', error.message);
             return '2.1.0';
         }
     }
@@ -319,7 +319,7 @@ class IPCManager {
         try {
             return window.electronAPI.getPlatform();
         } catch (error) {
-            console.error('Error getting platform:', error);
+            logger.error('Error getting platform:', error.message);
             return 'unknown';
         }
     }
