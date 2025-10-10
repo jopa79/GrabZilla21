@@ -183,9 +183,97 @@ function isValidVideoUrl(url) {
   }
 }
 
+/**
+ * Validate and sanitize FFmpeg format parameter
+ * Prevents command injection via format parameter
+ * @param {string} format - Format string from user
+ * @returns {string} Validated format
+ * @throws {Error} If format is invalid
+ */
+function validateFFmpegFormat(format) {
+  if (!format || typeof format !== 'string') {
+    throw new Error('Invalid format parameter');
+  }
+
+  // Whitelist of allowed formats
+  const allowedFormats = [
+    'H264',
+    'ProRes',
+    'DNxHR',
+    'Audio only',
+    'None'
+  ];
+
+  const trimmed = format.trim();
+
+  if (!allowedFormats.includes(trimmed)) {
+    throw new Error(`Invalid format: ${trimmed}. Allowed formats: ${allowedFormats.join(', ')}`);
+  }
+
+  return trimmed;
+}
+
+/**
+ * Validate and sanitize FFmpeg quality parameter
+ * Prevents command injection via quality parameter
+ * @param {string} quality - Quality string from user
+ * @returns {string} Validated quality
+ * @throws {Error} If quality is invalid
+ */
+function validateFFmpegQuality(quality) {
+  if (!quality || typeof quality !== 'string') {
+    throw new Error('Invalid quality parameter');
+  }
+
+  // Whitelist of allowed quality settings
+  const allowedQualities = [
+    '4K',
+    '1440p',
+    '1080p',
+    '720p',
+    '480p',
+    '360p',
+    'best',
+    'worst'
+  ];
+
+  const trimmed = quality.trim();
+
+  if (!allowedQualities.includes(trimmed)) {
+    throw new Error(`Invalid quality: ${trimmed}. Allowed qualities: ${allowedQualities.join(', ')}`);
+  }
+
+  return trimmed;
+}
+
+/**
+ * Validate FFmpeg output file extension
+ * @param {string} format - Target format
+ * @returns {string} Safe file extension
+ */
+function validateFFmpegExtension(format) {
+  const extensionMap = {
+    'H264': 'mp4',
+    'ProRes': 'mov',
+    'DNxHR': 'mov',
+    'Audio only': 'm4a',
+    'None': '' // No conversion
+  };
+
+  const ext = extensionMap[format];
+  if (!ext && format !== 'None') {
+    throw new Error(`Unknown format for extension mapping: ${format}`);
+  }
+
+  return ext;
+}
+
 module.exports = {
   sanitizePath,
   validateCookieFile,
   sanitizeFilename,
-  isValidVideoUrl
+  isValidVideoUrl,
+  validateFFmpegFormat,
+  validateFFmpegQuality,
+  validateFFmpegExtension
 };

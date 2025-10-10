@@ -5,7 +5,7 @@ const { spawn } = require('child_process')
 const notifier = require('node-notifier')
 const ffmpegConverter = require('../scripts/utils/ffmpeg-converter')
 const DownloadManager = require('./download-manager')
-const { sanitizePath, validateCookieFile, sanitizeFilename, isValidVideoUrl } = require('./security-utils')
+const { sanitizePath, validateCookieFile, sanitizeFilename, isValidVideoUrl, validateFFmpegFormat, validateFFmpegQuality, validateFFmpegExtension } = require('./security-utils')
 const logger = require('./logger')
 
 // Keep a global reference of the window object
@@ -1433,9 +1433,18 @@ async function convertVideoFormat(event, { url, inputPath, format, quality, save
     throw new Error('FFmpeg binary not found - conversion not available')
   }
 
+  // SECURITY: Validate format and quality parameters to prevent command injection
+  let validatedFormat, validatedQuality
+  try {
+    validatedFormat = validateFFmpegFormat(format)
+    validatedQuality = validateFFmpegQuality(quality)
+  } catch (error) {
+    throw new Error(`Invalid conversion parameters: ${error.message}`)
+  }
+
   // Generate output filename with appropriate extension and format suffix
   const inputFilename = path.basename(inputPath, path.extname(inputPath))
-  const outputExtension = getOutputExtension(format)
+  const outputExtension = validateFFmpegExtension(validatedFormat)
 
   // Map format names to proper filename suffixes
   const formatSuffixes = {
@@ -1444,13 +1453,13 @@ async function convertVideoFormat(event, { url, inputPath, format, quality, save
     'DNxHR': 'dnxhd',
     'Audio only': 'audio'
   }
-  const suffix = formatSuffixes[format] || format.toLowerCase()
+  const suffix = formatSuffixes[validatedFormat] || validatedFormat.toLowerCase()
 
   const outputFilename = `${inputFilename}_${suffix}.${outputExtension}`
   const outputPath = path.join(savePath, outputFilename)
 
   logger.debug('Starting format conversion:', {
-    inputPath, outputPath, format, quality
+    inputPath, outputPath, format: validatedFormat, quality: validatedQuality
   })
 
   // Get video duration for progress calculation
@@ -1482,8 +1491,8 @@ async function convertVideoFormat(event, { url, inputPath, format, quality, save
     const result = await ffmpegConverter.convertVideo({
       inputPath,
       outputPath,
-      format,
-      quality,
+      format: validatedFormat,
+      quality: validatedQuality,
       duration,
       onProgress
     })
