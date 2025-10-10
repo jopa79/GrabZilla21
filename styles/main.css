@@ -383,14 +383,14 @@ button:disabled:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 8px;
+    padding: 4px 12px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
     line-height: 16px;
     letter-spacing: -0.1504px;
     min-width: 80px;
-    max-width: 100px;
+    max-width: 140px; /* Increased from 100px to accommodate "Downloading 99%" */
     text-align: center;
     transition: all 0.2s ease;
     position: relative;
