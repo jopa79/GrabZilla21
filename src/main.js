@@ -227,8 +227,16 @@ ipcMain.handle('check-file-exists', async (event, filePath) => {
 let clipboardMonitorInterval = null
 let lastClipboardText = ''
 
-ipcMain.handle('start-clipboard-monitor', async (event) => {
+ipcMain.handle('start-clipboard-monitor', async (event, userConsented = false) => {
   try {
+    // SECURITY: Require explicit user consent for clipboard monitoring
+    if (!userConsented) {
+      return {
+        success: false,
+        error: 'User consent required for clipboard monitoring'
+      }
+    }
+
     if (clipboardMonitorInterval) {
       return { success: false, message: 'Already monitoring' }
     }
@@ -241,20 +249,24 @@ ipcMain.handle('start-clipboard-monitor', async (event) => {
       if (currentText && currentText !== lastClipboardText) {
         lastClipboardText = currentText
 
-        // Check if it contains a video URL
+        // SECURITY: Only check for video URLs, don't process other clipboard content
+        // This prevents accidental exposure of passwords, API keys, etc.
         const youtubeMatch = currentText.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
         const vimeoMatch = currentText.match(/(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/)
 
         if (youtubeMatch || vimeoMatch) {
           event.sender.send('clipboard-url-detected', currentText)
         }
+        // Don't log or process non-URL clipboard content
       }
     }, 1000) // Check every second
 
+    logger.info('Clipboard monitoring started with user consent')
     return { success: true }
   } catch (error) {
+    // SECURITY: Don't expose clipboard content in error logs
     logger.error('Error starting clipboard monitor:', error.message)
-    return { success: false, error: error.message }
+    return { success: false, error: 'Failed to start clipboard monitoring' }
   }
 })
 

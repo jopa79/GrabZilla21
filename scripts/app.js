@@ -1416,7 +1416,32 @@ class GrabZillaApp {
 
         try {
             if (enabled) {
-                const result = await window.electronAPI.startClipboardMonitor();
+                // Check if consent has been given
+                if (!this.state.hasClipboardConsentAnswer()) {
+                    // Show consent dialog for first time
+                    const consentDialog = new window.ClipboardConsentDialog();
+                    const { allowed, rememberChoice } = await consentDialog.show();
+
+                    if (rememberChoice) {
+                        // Save consent preference
+                        this.state.setClipboardConsent(allowed);
+                    }
+
+                    if (!allowed) {
+                        // User denied consent
+                        document.getElementById('clipboardMonitorToggle').checked = false;
+                        this.updateStatusMessage('Clipboard monitoring requires your permission');
+                        return;
+                    }
+                } else if (!this.state.hasClipboardConsent()) {
+                    // User previously denied consent
+                    document.getElementById('clipboardMonitorToggle').checked = false;
+                    this.showError('You have previously denied clipboard monitoring permission');
+                    return;
+                }
+
+                // User has consented - start monitoring
+                const result = await window.electronAPI.startClipboardMonitor(true);
                 if (result.success) {
                     // Set up listener for detected URLs
                     window.electronAPI.onClipboardUrlDetected((event, url) => {
@@ -1424,7 +1449,7 @@ class GrabZillaApp {
                     });
                     this.updateStatusMessage('Clipboard monitoring enabled');
                 } else {
-                    this.showError('Failed to start clipboard monitoring');
+                    this.showError(result.error || 'Failed to start clipboard monitoring');
                     document.getElementById('clipboardMonitorToggle').checked = false;
                 }
             } else {
@@ -1434,6 +1459,7 @@ class GrabZillaApp {
         } catch (error) {
             logger.error('Error toggling clipboard monitor:', error.message);
             this.showError(`Clipboard monitoring error: ${error.message}`);
+            document.getElementById('clipboardMonitorToggle').checked = false;
         }
     }
 

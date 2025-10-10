@@ -11,7 +11,8 @@ class AppState {
             defaultFormat: window.AppConfig?.APP_CONFIG?.DEFAULT_FORMAT || 'None',
             filenamePattern: window.AppConfig?.APP_CONFIG?.DEFAULT_FILENAME_PATTERN || '%(title)s.%(ext)s',
             cookieFile: null,
-            maxHistoryEntries: 100 // Maximum number of history entries to keep
+            maxHistoryEntries: 100, // Maximum number of history entries to keep
+            clipboardConsent: null // null = not asked, true = allowed, false = denied
         };
         this.ui = {
             isDownloading: false,
@@ -316,6 +317,28 @@ class AppState {
         const oldConfig = { ...this.config };
         Object.assign(this.config, newConfig);
         this.emit('configUpdated', { config: this.config, oldConfig });
+    }
+
+    // Clipboard consent management
+    hasClipboardConsent() {
+        return this.config.clipboardConsent === true;
+    }
+
+    hasClipboardConsentAnswer() {
+        return this.config.clipboardConsent !== null;
+    }
+
+    setClipboardConsent(allowed) {
+        this.config.clipboardConsent = allowed;
+        this.emit('clipboardConsentChanged', { allowed });
+        // Persist to localStorage
+        this.saveState();
+    }
+
+    resetClipboardConsent() {
+        this.config.clipboardConsent = null;
+        this.emit('clipboardConsentChanged', { allowed: null });
+        this.saveState();
     }
 
     // UI state management

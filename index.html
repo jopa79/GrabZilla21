@@ -93,13 +93,25 @@
                 </select>
 
                 <!-- Clipboard Monitoring -->
-                <div class="flex items-center gap-2 ml-4">
+                <div class="flex items-center gap-2 ml-4 group relative">
                     <span class="text-[#90a1b9] text-sm tracking-[-0.1504px]">Clipboard:</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="clipboardMonitorToggle" class="sr-only peer">
                         <div class="w-9 h-5 bg-[#45556c] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#155dfc]"></div>
                         <span class="ml-2 text-xs text-[#cad5e2]">Monitor</span>
                     </label>
+                    <!-- Info Icon with Tooltip -->
+                    <div class="relative">
+                        <svg class="w-4 h-4 text-[#90a1b9] hover:text-[#155dfc] transition-colors cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <!-- Tooltip -->
+                        <div class="absolute hidden group-hover:block bottom-full right-0 mb-2 w-64 px-3 py-2 text-xs text-white bg-[#1d293d] border border-[#45556c] rounded-lg shadow-lg z-50">
+                            <div class="font-semibold mb-1">Auto-detect Video URLs</div>
+                            <div class="text-[#cad5e2]">Automatically detects when you copy YouTube or Vimeo links. Your privacy is protected - only video URLs are checked.</div>
+                            <div class="absolute top-full right-4 -mt-1 border-4 border-transparent border-t-[#45556c]"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1053,8 +1065,9 @@
             loadScript('scripts/utils/url-validator.js', () => {
                 loadScript('scripts/core/event-bus.js', () => {
                     loadScript('scripts/models/Video.js', () => {
-                        loadScript('scripts/models/AppState.js', () => {
-                            loadScript('scripts/utils/error-handler.js', () => {
+                        loadScript('scripts/components/clipboard-consent-dialog.js', () => {
+                            loadScript('scripts/models/AppState.js', () => {
+                                loadScript('scripts/utils/error-handler.js', () => {
                                 loadScript('scripts/utils/desktop-notifications.js', () => {
                                     loadScript('scripts/utils/live-region-manager.js', () => {
                                         loadScript('scripts/utils/accessibility-manager.js', () => {
@@ -1091,6 +1104,7 @@
                 });
             });
         });
+    });
     </script>
 
     <!-- Debug script -->

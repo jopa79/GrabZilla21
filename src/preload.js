@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   checkFileExists: (filePath) => ipcRenderer.invoke('check-file-exists', filePath),
   
   // Clipboard monitoring
-  startClipboardMonitor: () => ipcRenderer.invoke('start-clipboard-monitor'),
+  startClipboardMonitor: (userConsented) => ipcRenderer.invoke('start-clipboard-monitor', userConsented),
   stopClipboardMonitor: () => ipcRenderer.invoke('stop-clipboard-monitor'),
   onClipboardUrlDetected: (callback) => {
     ipcRenderer.on('clipboard-url-detected', callback)
