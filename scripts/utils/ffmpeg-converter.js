@@ -28,6 +28,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const gpuDetector = require('./gpu-detector');
+const logger = require('../../src/logger');
 
 /**
  * FFmpeg Converter Class

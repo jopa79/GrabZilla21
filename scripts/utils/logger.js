@@ -153,7 +153,8 @@ function log(...args) {
   debug('[LEGACY]', ...args)
 }
 
-export {
+// Export to window for use in non-module scripts
+window.logger = {
   error,
   warn,
   info,

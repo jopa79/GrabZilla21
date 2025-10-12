@@ -166,7 +166,7 @@ class URLValidator {
 
     // Validate Vimeo URLs
     static isVimeoUrl(url) {
-        const patterns = window.AppConfig?.VALIDATION_PATTERNS || {
+        const patterns = (typeof window !== 'undefined' && window.AppConfig?.VALIDATION_PATTERNS) || {
             VIMEO_URL: /^(https?:\/\/)?(www\.)?(vimeo\.com\/\d+|player\.vimeo\.com\/video\/\d+)/i
         };
         return patterns.VIMEO_URL.test(url);

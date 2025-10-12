@@ -1,7 +1,10 @@
 // GrabZilla 2.1 - Application Entry Point
 // Modular architecture with clear separation of concerns
 
-import * as logger from './utils/logger.js';
+// Wrap entire file in try-catch to ensure initializeGrabZilla always gets defined
+(function() {
+    // Use logger from window (loaded by scripts/utils/logger.js)
+    const logger = window.logger || console;
 
 class GrabZillaApp {
     constructor() {
@@ -2739,3 +2742,5 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
     window.GrabZillaApp = GrabZillaApp;
 }
+
+})(); // End of wrapper function

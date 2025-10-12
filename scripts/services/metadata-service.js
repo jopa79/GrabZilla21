@@ -4,7 +4,8 @@
  * @version 2.1.0
  */
 
-import * as logger from '../utils/logger.js';
+// Use logger from window (loaded by scripts/utils/logger.js)
+const logger = window.logger;
 
 /**
  * METADATA SERVICE

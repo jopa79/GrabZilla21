@@ -327,7 +327,9 @@ ipcMain.handle('import-video-list', async (event) => {
     const { filePaths } = await dialog.showOpenDialog({
       title: 'Import Video List',
       filters: [
-        { name: 'JSON Files', extensions: ['json'] }
+        { name: 'All Supported Files', extensions: ['json', 'txt', 'md'] },
+        { name: 'JSON Files', extensions: ['json'] },
+        { name: 'Text Files', extensions: ['txt', 'md'] }
       ],
       properties: ['openFile']
     })
@@ -336,22 +338,54 @@ ipcMain.handle('import-video-list', async (event) => {
       return { success: false, cancelled: true }
     }
 
-    const fileContent = fs.readFileSync(filePaths[0], 'utf-8')
-    const importData = JSON.parse(fileContent)
+    const filePath = filePaths[0]
+    const fileContent = fs.readFileSync(filePath, 'utf-8')
+    const fileExt = path.extname(filePath).toLowerCase()
 
-    // Validate file format
-    if (!importData.videos || !Array.isArray(importData.videos)) {
-      return { success: false, error: 'Invalid file format: missing videos array' }
-    }
+    let videos = []
 
-    // Validate each video has required fields
-    for (const video of importData.videos) {
-      if (!video.url) {
-        return { success: false, error: 'Invalid file format: video missing URL' }
+    // Handle JSON files (structured format)
+    if (fileExt === '.json') {
+      const importData = JSON.parse(fileContent)
+
+      // Validate file format
+      if (!importData.videos || !Array.isArray(importData.videos)) {
+        return { success: false, error: 'Invalid file format: missing videos array' }
       }
+
+      // Validate each video has required fields
+      for (const video of importData.videos) {
+        if (!video.url) {
+          return { success: false, error: 'Invalid file format: video missing URL' }
+        }
+      }
+
+      videos = importData.videos
+    }
+    // Handle text/markdown files (extract URLs)
+    else if (fileExt === '.txt' || fileExt === '.md') {
+      // Use URLValidator to extract all valid video URLs
+      const URLValidator = require(path.join(__dirname, '../scripts/utils/url-validator.js'))
+      const { valid: urls } = URLValidator.validateMultipleUrls(fileContent)
+
+      if (urls.length === 0) {
+        return { success: false, error: 'No valid video URLs found in file' }
+      }
+
+      // Convert URLs to video objects (metadata will be fetched by renderer)
+      videos = urls.map(url => ({
+        url: url,
+        title: 'Loading...',
+        status: 'ready'
+      }))
+
+      logger.info(`Extracted ${urls.length} video URL(s) from ${path.basename(filePath)}`)
+    }
+    else {
+      return { success: false, error: 'Unsupported file format' }
     }
 
-    return { success: true, videos: importData.videos }
+    return { success: true, videos }
   } catch (error) {
     logger.error('Error importing video list:', error.message)
     return { success: false, error: error.message }

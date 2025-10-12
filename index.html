@@ -1061,8 +1061,9 @@
         }
 
         // Load modular scripts in correct dependency order
-        loadScript('scripts/utils/config.js', () => {
-            loadScript('scripts/utils/url-validator.js', () => {
+        loadScript('scripts/utils/logger.js', () => {
+            loadScript('scripts/utils/config.js', () => {
+                loadScript('scripts/utils/url-validator.js', () => {
                 loadScript('scripts/core/event-bus.js', () => {
                     loadScript('scripts/models/Video.js', () => {
                         loadScript('scripts/components/clipboard-consent-dialog.js', () => {
@@ -1105,6 +1106,7 @@
             });
         });
     });
+});
     </script>
 
     <!-- Debug script -->
