@@ -575,9 +575,16 @@ class GrabZillaApp {
         playlistData.videos.forEach((video, index) => {
             const videoItem = document.createElement('label');
             videoItem.className = 'flex items-center gap-3 p-2 hover:bg-[#45556c]/30 rounded cursor-pointer';
+
+            // Check if video is private/unavailable (deselect by default)
+            const isPrivate = video.title.includes('[Private') ||
+                            video.title.includes('Private video') ||
+                            video.title.includes('[Deleted') ||
+                            video.title.includes('Unavailable');
+            const checkedAttr = isPrivate ? '' : 'checked';
+
             videoItem.innerHTML = `
-                <input type="checkbox" class="playlist-video-checkbox w-4 h-4" data-index="${index}" checked>
-                <img src="${video.thumbnail || 'assets/icons/video-placeholder.svg'}" alt="" class="w-16 h-12 object-cover rounded">
+                <input type="checkbox" class="playlist-video-checkbox w-4 h-4" data-index="${index}" ${checkedAttr}>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm text-white truncate">${video.title}</p>
                     <p class="text-xs text-[#90a1b9]">${video.duration ? this.formatDuration(video.duration) : 'Unknown duration'}</p>

@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
-<body class="bg-[#1d293d] text-white min-h-screen flex flex-col font-['Inter']">
+<body class="bg-[#1d293d] text-white h-screen overflow-hidden flex flex-col font-['Inter']">
     <!-- Header - macOS Title Bar Style -->
     <header class="bg-[#0f172b] h-[41px] flex items-center justify-center border-b border-[#314158] shrink-0 relative"
         role="banner" aria-label="GrabZilla application header" style="-webkit-app-region: drag;">
@@ -128,13 +128,13 @@
     </section>
 
     <!-- Video List - Flex grow to fill remaining space -->
-    <main class="flex-1 overflow-hidden" role="main" aria-label="Video download queue"
+    <main class="flex-1 overflow-hidden flex flex-col" role="main" aria-label="Video download queue"
         aria-describedby="main-content-help">
         <div id="main-content-help" class="sr-only">
             Video download queue. Use arrow keys to navigate, Enter or Space to select videos, Delete to remove videos.
         </div>
-        <!-- Table Header -->
-        <div class="grid grid-cols-[40px_40px_1fr_120px_100px_120px_100px] gap-4 px-4 py-4 text-sm font-medium text-[#90a1b9] tracking-[-0.1504px]"
+        <!-- Table Header (Sticky) -->
+        <div class="shrink-0 grid grid-cols-[40px_40px_1fr_120px_100px_120px_100px] gap-4 px-4 py-4 text-sm font-medium text-[#90a1b9] tracking-[-0.1504px]"
             role="row" aria-label="Video list column headers">
             <div role="columnheader" aria-label="Selection checkbox"></div>
             <div role="columnheader" aria-label="Drag handle"></div>
@@ -145,8 +145,8 @@
             <div role="columnheader">Status</div>
         </div>
 
-        <!-- Video Items Container -->
-        <div id="videoList" class="px-4 pt-2 pb-4 space-y-2 overflow-y-auto h-full" role="grid"
+        <!-- Video Items Container (Scrollable) -->
+        <div id="videoList" class="flex-1 px-4 pt-2 pb-4 space-y-2 overflow-y-auto" role="grid"
             aria-label="Video download queue" aria-describedby="video-list-instructions" tabindex="0">
             <div id="video-list-instructions" class="sr-only">
                 Use arrow keys to navigate between videos. Press Enter or Space to select videos. Press Delete to remove
@@ -675,7 +675,7 @@
                         Cancel
                     </button>
                     <button id="downloadSelectedPlaylistBtn" class="bg-[#155dfc] text-white px-4 py-2 rounded-lg text-sm font-medium">
-                        Download Selected
+                        Add to Queue
                     </button>
                 </div>
             </div>
